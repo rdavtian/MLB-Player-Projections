@@ -1,3 +1,4 @@
+# This is a test
 #https://www.usatoday.com/sports/mlb/salaries/2008/player/all/
 source('functions.R')
 library('dplyr')
@@ -18,8 +19,8 @@ options(scipen = 999)
 #####################################################################################
 # Data Reading, Cleaning, Manipulating
 offense <- read.csv('fangraphs_hitting.csv', header = T)
-hitters <- read.csv('player_age_seasons.csv', header = T)[, c('ï..Season','Name','Age','playerid')]
-positions <- read.csv('positions.csv', header = T)[, c('ï..Season','Name','Pos','Inn','playerid')]
+hitters <- read.csv('player_age_seasons.csv', header = T)[, c('?..Season','Name','Age','playerid')]
+positions <- read.csv('positions.csv', header = T)[, c('?..Season','Name','Pos','Inn','playerid')]
 salaries <- loadWorkbook('salaries.xlsx')
 cpi <- read.csv('CPI.csv', header = T)
 colnames(offense)[1] <- 'Season'
