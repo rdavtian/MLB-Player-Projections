@@ -1,4 +1,5 @@
 current_season = 2019
+control <- trainControl(method = "cv", number = 3)
 # function that labels correlation between 2 variables
 corr_eqn <- function(x,y, digits = 2, binary) 
 { 
