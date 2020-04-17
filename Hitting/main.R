@@ -11,21 +11,17 @@ library('openxlsx')
 library('caret')
 library('stringr')
 # set working directory
-setwd('C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projects/Hitting')
+setwd('C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Hitting/Data')
 # remove scientific notation 
 options(scipen = 999)
 
 #####################################################################################
 # Data Reading, Cleaning, Manipulating
-offense <- read.csv('fangraphs_hitting.csv', header = T)
-hitters <- read.csv('player_age_seasons.csv', header = T)[, c('?..Season','Name','Age','playerid')]
-positions <- read.csv('positions.csv', header = T)[, c('?..Season','Name','Pos','Inn','playerid')]
+offense <- read.csv('fangraphs_hitting.csv', header = T, fileEncoding="UTF-8-BOM")
+hitters <- read.csv('player_age_seasons.csv', header = T, fileEncoding="UTF-8-BOM")[, c('Season','Name','Age','playerid')]
+positions <- read.csv('positions.csv', header = T, fileEncoding="UTF-8-BOM")[, c('Season','Name','Pos','Inn','playerid')]
 salaries <- loadWorkbook('salaries.xlsx')
-cpi <- read.csv('CPI.csv', header = T)
-colnames(offense)[1] <- 'Season'
-colnames(hitters)[1] <- 'Season'
-colnames(positions)[1] <- 'Season'
-colnames(cpi)[1] <- 'Season'
+cpi <- read.csv('CPI.csv', header = T, fileEncoding="UTF-8-BOM")
 offense$Name <- as.character(offense$Name)
 hitters$Name <- as.character(hitters$Name)
 positions$Name <- as.character(positions$Name)
