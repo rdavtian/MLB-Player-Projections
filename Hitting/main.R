@@ -1,4 +1,3 @@
-# This is a test
 #https://www.usatoday.com/sports/mlb/salaries/2008/player/all/
 source('functions.R')
 library('dplyr')
