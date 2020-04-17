@@ -1,4 +1,5 @@
 #https://www.usatoday.com/sports/mlb/salaries/2008/player/all/
+setwd('C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Hitting/')
 source('functions.R')
 library('dplyr')
 library('knitr')
@@ -11,21 +12,17 @@ library('openxlsx')
 library('caret')
 library('stringr')
 # set working directory
-setwd('C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projects/Hitting')
+setwd('C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Hitting/Data')
 # remove scientific notation 
 options(scipen = 999)
 
 #####################################################################################
 # Data Reading, Cleaning, Manipulating
-offense <- read.csv('fangraphs_hitting.csv', header = T)
-hitters <- read.csv('player_age_seasons.csv', header = T)[, c('?..Season','Name','Age','playerid')]
-positions <- read.csv('positions.csv', header = T)[, c('?..Season','Name','Pos','Inn','playerid')]
+offense <- read.csv('fangraphs_hitting.csv', header = T, fileEncoding="UTF-8-BOM")
+hitters <- read.csv('player_age_seasons.csv', header = T, fileEncoding="UTF-8-BOM")[, c('Season','Name','Age','playerid')]
+positions <- read.csv('positions.csv', header = T, fileEncoding="UTF-8-BOM")[, c('Season','Name','Pos','Inn','playerid')]
 salaries <- loadWorkbook('salaries.xlsx')
-cpi <- read.csv('CPI.csv', header = T)
-colnames(offense)[1] <- 'Season'
-colnames(hitters)[1] <- 'Season'
-colnames(positions)[1] <- 'Season'
-colnames(cpi)[1] <- 'Season'
+cpi <- read.csv('CPI.csv', header = T, fileEncoding="UTF-8-BOM")
 offense$Name <- as.character(offense$Name)
 hitters$Name <- as.character(hitters$Name)
 positions$Name <- as.character(positions$Name)
@@ -43,10 +40,12 @@ offense <- offense %>%
          BIP = AB - SO - HR + SF,
          BIP_AVG = BIP / PA,
          OPS = OBP + SLG,
+         TB = (X1B + 2*(X2B) + 3*(X3B) + 4*(HR)),
+         RBI_Per_BIP = (RBI - (HR*1.565) - SF) / (AB - HR - SO),
+         Runs_Per_TOB = (R - HR) / (H + BB + HBP - HR), 
          xBABIP = 0.1911 + (LD. * 0.38) - (TrueFB. * 0.1502) - 
          (TrueIFFB. * 0.4173) + (Hard. * 0.25502) + (Spd*0.0049) + 
-           ((GB. * Pull.) * -0.1492)
-         )
+           ((GB. * Pull.) * -0.1492))
 sheetNames <- sheets(salaries)
 for(i in 1:length(sheetNames))
 {
@@ -935,7 +934,135 @@ future_preds <- future_preds %>%
          OPS = OBP + SLG,
          OPS_Lower = OBP_Lower + SLG_Lower,
          OPS_Upper = OBP_Upper + SLG_Upper)
+#######################################################################################
+# Projecting RBI Per BIP
+hitters2 <- add_projected_prior_seasons(hitters)
+hitters2 <- merge_hitting_stats(hitters2, c('PA','RBI_Per_BIP','FB.','SwStr.','Swing.','Contact.',
+                                            'Zone.','F.Strike.','O.Contact.','Z.Contact.',
+                                            'Z.Swing.','O.Swing.','FB.','LD.','GB.','Pull.',
+                                            'Oppo.','Cent.','Hard.','Med.','Soft.','Spd'))
+history_future <- historical_future_split(hitters2, current_season)
+historical <- history_future[[1]]; future <- history_future[[2]]
+historical <- historical %>% 
+  mutate(PA_Harmonic = 2 / ((1 / PA_Current) + (1 / PA_Projected)))
 
+y_var <- c('RBI_Per_BIP_Projected')
+x_vars <- c('RBI_Per_BIP_Current','RBI_Per_BIP_Prior','RBI_Per_BIP_Prior_2',
+            'FB._Current','FB._Prior','FB._Prior_2',
+            'GB._Current','GB._Prior','GB._Prior_2','LD._Current','LD._Prior','LD._Prior_2',
+            'Hard._Current','Hard._Prior','Hard._Prior_2','Spd_Current','Spd_Prior','Spd_Prior_2',
+            'poly(Age_Projected, 2)',
+            'Pos_Group_Current','MLB_Service_Projected','SwStr._Current','SwStr._Prior',
+            'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
+            'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
+            'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
+            'F.Strike._Prior_2','PA_Harmonic')
+x_vars2 <- c('RBI_Per_BIP_Current','RBI_Per_BIP_Prior','RBI_Per_BIP_Prior_2',
+             'FB._Current','FB._Prior','FB._Prior_2',
+             'GB._Current','GB._Prior','GB._Prior_2','LD._Current',
+             'LD._Prior','LD._Prior_2','Hard._Current','Hard._Prior',
+             'Hard._Prior_2','Spd_Current','Spd_Prior','Spd_Prior_2','Age_Projected',
+             'Pos_Group_Current','MLB_Service_Projected','SwStr._Current','SwStr._Prior',
+             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
+             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
+             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
+             'F.Strike._Prior_2','PA_Harmonic')
+list_of_errors <- list()
+list_of_mapes <- list()
+for (i in 1:6)
+{
+  print(i)
+  print('---------------------------------------------------------')
+  x <- train_models(historical, y_var, x_vars, x_vars2, model_type = 'gbm', tuneLength = 5, 
+                    years_out = i)
+  mapes <- do.call(rbind, x[[1]])
+  resid <- unlist(x[[4]])
+  list_of_errors[[i]] <- resid
+  list_of_mapes[[i]] <- mapes
+}
+# Run final model through current_season and predict future seasons
+errors <- list_of_errors
+z <- predict_future_years(historical, future, y_var, x_vars, x_vars2, 
+                          model_type = 'gbm', tuneLength = 5, years_out = 6, errors, 1)
+model <- z[[2]]
+#coef(model$finalModel, model$bestTune$lambda)
+
+RBI_Per_BIP <- z[[1]] %>% 
+  select(Season_Projected, Playerid, Stat_Projected, 
+         Stat_Projected_Upper, Stat_Projected_Lower) %>%
+  rename(RBI_Per_BIP  = 'Stat_Projected', RBI_Per_BIP_Upper = 'Stat_Projected_Upper', 
+         RBI_Per_BIP_Lower = 'Stat_Projected_Lower')
+
+future_preds <- future_preds %>% 
+  inner_join(RBI_Per_BIP, by = c('Playerid','Season_Projected')) %>%
+  mutate(RBI = RBI_Per_BIP*(BIP - SF) + (1.565*HR) + SF,
+         RBI_Lower = RBI_Per_BIP_Lower*(BIP_Lower - SF) + (1.565*HR_Lower) + SF,
+         RBI_Upper = RBI_Per_BIP_Upper*(BIP_Upper - SF) + (1.565*HR_Upper) + SF)
+##############################################################################
+#######################################################################################
+# Projecting Runs Per TOB
+hitters2 <- add_projected_prior_seasons(hitters)
+hitters2 <- merge_hitting_stats(hitters2, c('PA','Runs_Per_TOB','FB.','SwStr.','Swing.','Contact.',
+                                            'Zone.','F.Strike.','O.Contact.','Z.Contact.',
+                                            'Z.Swing.','O.Swing.','FB.','LD.','GB.','Pull.',
+                                            'Oppo.','Cent.','Hard.','Med.','Soft.','Spd'))
+history_future <- historical_future_split(hitters2, current_season)
+historical <- history_future[[1]]; future <- history_future[[2]]
+historical <- historical %>% 
+  mutate(PA_Harmonic = 2 / ((1 / PA_Current) + (1 / PA_Projected)))
+
+y_var <- c('Runs_Per_TOB_Projected')
+x_vars <- c('Runs_Per_TOB_Current','Runs_Per_TOB_Prior','Runs_Per_TOB_Prior_2',
+            'FB._Current','FB._Prior','FB._Prior_2',
+            'GB._Current','GB._Prior','GB._Prior_2','LD._Current','LD._Prior','LD._Prior_2',
+            'Hard._Current','Hard._Prior','Hard._Prior_2','Spd_Current','Spd_Prior','Spd_Prior_2',
+            'poly(Age_Projected, 2)',
+            'Pos_Group_Current','MLB_Service_Projected','SwStr._Current','SwStr._Prior',
+            'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
+            'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
+            'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
+            'F.Strike._Prior_2','PA_Harmonic')
+x_vars2 <- c('Runs_Per_TOB_Current','Runs_Per_TOB_Prior','Runs_Per_TOB_Prior_2',
+             'FB._Current','FB._Prior','FB._Prior_2',
+             'GB._Current','GB._Prior','GB._Prior_2','LD._Current',
+             'LD._Prior','LD._Prior_2','Hard._Current','Hard._Prior',
+             'Hard._Prior_2','Spd_Current','Spd_Prior','Spd_Prior_2','Age_Projected',
+             'Pos_Group_Current','MLB_Service_Projected','SwStr._Current','SwStr._Prior',
+             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
+             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
+             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
+             'F.Strike._Prior_2','PA_Harmonic')
+list_of_errors <- list()
+list_of_mapes <- list()
+for (i in 1:6)
+{
+  print(i)
+  print('---------------------------------------------------------')
+  x <- train_models(historical, y_var, x_vars, x_vars2, model_type = 'gbm', tuneLength = 5, 
+                    years_out = i)
+  mapes <- do.call(rbind, x[[1]])
+  resid <- unlist(x[[4]])
+  list_of_errors[[i]] <- resid
+  list_of_mapes[[i]] <- mapes
+}
+# Run final model through current_season and predict future seasons
+errors <- list_of_errors
+z <- predict_future_years(historical, future, y_var, x_vars, x_vars2, 
+                          model_type = 'gbm', tuneLength = 5, years_out = 6, errors, 1)
+model <- z[[2]]
+#coef(model$finalModel, model$bestTune$lambda)
+
+Runs_Per_TOB<- z[[1]] %>% 
+  select(Season_Projected, Playerid, Stat_Projected, 
+         Stat_Projected_Upper, Stat_Projected_Lower) %>%
+  rename(Runs_Per_TOB  = 'Stat_Projected', Runs_Per_TOB_Upper = 'Stat_Projected_Upper', 
+         Runs_Per_TOB_Lower = 'Stat_Projected_Lower')
+
+future_preds <- future_preds %>% 
+  inner_join(Runs_Per_TOB, by = c('Playerid','Season_Projected')) %>%
+  mutate(R = Runs_Per_TOB*(Hits + BB + HBP - HR) + HR,
+         R_Lower = Runs_Per_TOB_Lower*(Hits_Lower + BB_Lower + HBP - HR_Lower) + HR_Lower,
+         R_Upper = Runs_Per_TOB_Upper*(Hits_Upper + BB_Upper + HBP - HR_Upper) + HR_Upper)
 ##############################################################################
 # View forecasts
 future_preds %>% 
@@ -943,7 +1070,8 @@ future_preds %>%
   mutate(K. = SO / PA,
          BB. = BB / PA) %>%
   select(Name,Season_Projected,Pos_Group_Current,PA,AB,Hits,
-         HR_Lower,HR,HR_Upper,BB,SO,K., BB.,AVG,OBP,SLG,OPS,ISO,BABIP,wOBA,wRC.,wRC._Lower,wRC._Upper) %>% 
+         HR_Lower,HR,HR_Upper,BB,SO,K., BB.,AVG,OBP,SLG,OPS,ISO,BABIP,wOBA,
+         wRC.,wRC._Lower,wRC._Upper,RBI_Lower,RBI,RBI_Upper,R_Lower,R,R_Upper) %>% 
   arrange(Season_Projected, -OPS) %>%
   mutate_if(is.numeric, round, 3) %>%
   mutate(PA = round(PA), AB = round(AB), 
