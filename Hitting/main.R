@@ -46,6 +46,7 @@ offense <- offense %>%
          xBABIP = 0.1911 + (LD. * 0.38) - (TrueFB. * 0.1502) - 
          (TrueIFFB. * 0.4173) + (Hard. * 0.25502) + (Spd*0.0049) + 
            ((GB. * Pull.) * -0.1492))
+offense$Name[offense$playerid == 14145] <- 'Daniel  Robertson'
 sheetNames <- sheets(salaries)
 for(i in 1:length(sheetNames))
 {
@@ -114,7 +115,7 @@ x_vars <- c('AVG_Current','AVG_Prior','AVG_Prior_2','FB._Current','FB._Prior','F
             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-            'F.Strike._Prior_2','PA_Harmonic')
+            'F.Strike._Prior_2','PA_Projected')
 x_vars2 <- c('AVG_Current','AVG_Prior','AVG_Prior_2','FB._Current','FB._Prior','FB._Prior_2',
              'GB._Current','GB._Prior','GB._Prior_2','LD._Current','LD._Prior','LD._Prior_2',
              'Hard._Current','Hard._Prior','Hard._Prior_2','Spd_Current','Spd_Prior','Spd_Prior_2',
@@ -123,7 +124,7 @@ x_vars2 <- c('AVG_Current','AVG_Prior','AVG_Prior_2','FB._Current','FB._Prior','
              'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
              'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
              'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-             'F.Strike._Prior_2','PA_Harmonic')
+             'F.Strike._Prior_2','PA_Projected')
 
 x <- train_models(historical, y_var, x_vars, x_vars2, model_type = 'gbm', tuneLength = 3, 
                   years_out = 1)
@@ -157,9 +158,9 @@ historical <- historical %>%
 
 y_var <- c('PA_PerG_Projected')
 x_vars <- c('PA_PerG_Current','PA_PerG_Prior','PA_PerG_Prior_2','poly(Age_Projected, 2)',
-            'Pos_Group_Current','MLB_Service_Projected','PA_Harmonic')
+            'Pos_Group_Current','MLB_Service_Projected','PA_Projected')
 x_vars2 <- c('PA_PerG_Current','PA_PerG_Prior','PA_PerG_Prior_2','Age_Projected',
-             'Pos_Group_Current','MLB_Service_Projected','PA_Harmonic')
+             'Pos_Group_Current','MLB_Service_Projected','PA_Projected')
 
 list_of_errors <- list()
 list_of_mapes <- list()
@@ -203,13 +204,13 @@ x_vars <- c('K._Current','K._Prior','K._Prior_2','poly(Age_Projected, 2)',
             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-            'F.Strike._Prior_2','PA_Harmonic')
+            'F.Strike._Prior_2','PA_Projected')
 x_vars2 <- c('K._Current','K._Prior','K._Prior_2','Age_Projected',
              'Pos_Group_Current','MLB_Service_Projected','SwStr._Current','SwStr._Prior',
              'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
              'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
              'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-             'F.Strike._Prior_2','PA_Harmonic')
+             'F.Strike._Prior_2','PA_Projected')
 
 list_of_errors <- list()
 list_of_mapes <- list()
@@ -259,13 +260,13 @@ x_vars <- c('BB._Current','BB._Prior','BB._Prior_2','poly(Age_Projected, 2)',
             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-            'F.Strike._Prior_2','PA_Harmonic')
+            'F.Strike._Prior_2','PA_Projected')
 x_vars2 <- c('BB._Current','BB._Prior','BB._Prior_2','Age_Projected',
              'Pos_Group_Current','MLB_Service_Projected','SwStr._Current','SwStr._Prior',
              'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
              'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
              'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-             'F.Strike._Prior_2','PA_Harmonic')
+             'F.Strike._Prior_2','PA_Projected')
 
 list_of_errors <- list()
 list_of_mapes <- list()
@@ -309,9 +310,9 @@ historical <- historical %>%
 
 y_var <- c('PA_PerHBP_Projected')
 x_vars <- c('PA_PerHBP_Current','PA_PerHBP_Prior','PA_PerHBP_Prior_2',
-            'MLB_Service_Projected','Pos_Group_Current','poly(Age_Projected,2)','PA_Harmonic')
+            'MLB_Service_Projected','Pos_Group_Current','poly(Age_Projected,2)','PA_Projected')
 x_vars2 <- c('PA_PerHBP_Current','PA_PerHBP_Prior','PA_PerHBP_Prior_2',
-             'MLB_Service_Projected','Pos_Group_Current','Age_Projected','PA_Harmonic')
+             'MLB_Service_Projected','Pos_Group_Current','Age_Projected','PA_Projected')
 
 list_of_errors <- list()
 list_of_mapes <- list()
@@ -351,9 +352,9 @@ historical <- historical %>%
 
 y_var <- c('PA_PerSF_Projected')
 x_vars <- c('PA_PerSF_Current','PA_PerSF_Prior','PA_PerSF_Prior_2',
-            'MLB_Service_Projected','Pos_Group_Current','poly(Age_Projected,2)','PA_Harmonic')
+            'MLB_Service_Projected','Pos_Group_Current','poly(Age_Projected,2)','PA_Projected')
 x_vars2 <- c('PA_PerSF_Current','PA_PerSF_Prior','PA_PerSF_Prior_2',
-             'MLB_Service_Projected','Pos_Group_Current','Age_Projected','PA_Harmonic')
+             'MLB_Service_Projected','Pos_Group_Current','Age_Projected','PA_Projected')
 
 list_of_errors <- list()
 list_of_mapes <- list()
@@ -408,7 +409,7 @@ x_vars <- c('FB._Current','FB._Prior','FB._Prior_2','GB._Current','GB._Prior',
             'Swing._Current','Swing._Prior','Swing._Prior_2','Contact._Current','Contact._Prior',
             'Contact._Prior_2','Zone._Current','Zone._Prior','Zone._Prior_2',
             'F.Strike._Current','F.Strike._Prior','F.Strike._Prior_2','K._Current',
-            'K._Prior','K._Prior_2','BB._Current','BB._Prior','BB._Prior_2','PA_Harmonic')
+            'K._Prior','K._Prior_2','BB._Current','BB._Prior','BB._Prior_2','PA_Projected')
 x_vars2 <- c('FB._Current','FB._Prior','FB._Prior_2','GB._Current','GB._Prior',
             'GB._Prior_2','LD._Current','LD._Prior','LD._Prior_2','Hard._Current',
             'Hard._Prior','Hard._Prior_2','O.Contact._Current','O.Contact._Prior',
@@ -418,7 +419,7 @@ x_vars2 <- c('FB._Current','FB._Prior','FB._Prior_2','GB._Current','GB._Prior',
             'Swing._Current','Swing._Prior','Swing._Prior_2','Contact._Current','Contact._Prior',
             'Contact._Prior_2','Zone._Current','Zone._Prior','Zone._Prior_2',
             'F.Strike._Current','F.Strike._Prior','F.Strike._Prior_2','K._Current',
-            'K._Prior','K._Prior_2','BB._Current','BB._Prior','BB._Prior_2','PA_Harmonic')
+            'K._Prior','K._Prior_2','BB._Current','BB._Prior','BB._Prior_2','PA_Projected')
 
 list_of_errors <- list()
 list_of_mapes <- list()
@@ -473,7 +474,7 @@ x_vars <- c('BABIP_Current','BABIP_Prior','BABIP_Prior_2','xBABIP_Current',
             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-            'F.Strike._Prior_2','PA_Harmonic')
+            'F.Strike._Prior_2','PA_Projected')
 x_vars2 <- c('BABIP_Current','BABIP_Prior','BABIP_Prior_2','xBABIP_Current',
             'xBABIP_Prior','xBABIP_Prior_2','FB._Current','FB._Prior','FB._Prior_2',
             'GB._Current','GB._Prior','GB._Prior_2','LD._Current','LD._Prior','LD._Prior_2',
@@ -483,7 +484,7 @@ x_vars2 <- c('BABIP_Current','BABIP_Prior','BABIP_Prior_2','xBABIP_Current',
             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-            'F.Strike._Prior_2','PA_Harmonic')
+            'F.Strike._Prior_2','PA_Projected')
 
 list_of_errors <- list()
 list_of_mapes <- list()
@@ -534,7 +535,7 @@ x_vars <- c('FB._Current','FB._Prior','FB._Prior_2',
             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-            'F.Strike._Prior_2','PA_Harmonic')
+            'F.Strike._Prior_2','PA_Projected')
 x_vars2 <- c('FB._Current','FB._Prior','FB._Prior_2',
              'GB._Current','GB._Prior','GB._Prior_2','LD._Current','LD._Prior','LD._Prior_2',
              'Hard._Current','Hard._Prior','Hard._Prior_2','Spd_Current','Spd_Prior','Spd_Prior_2',
@@ -543,7 +544,7 @@ x_vars2 <- c('FB._Current','FB._Prior','FB._Prior_2',
              'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
              'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
              'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-             'F.Strike._Prior_2','PA_Harmonic')
+             'F.Strike._Prior_2','PA_Projected')
 
 list_of_errors <- list()
 list_of_mapes <- list()
@@ -591,12 +592,12 @@ x_vars <- c('HR.FB_Current','HR.FB_Prior','HR.FB_Prior_2','poly(Age_Projected, 2
             'Pos_Group_Current','MLB_Service_Projected','ISO_Current',
             'ISO_Prior','ISO_Prior_2','Pull._Current','Pull._Prior','Pull._Prior_2',
             'LD._Current','LD._Prior','LD._Prior_2','FB._Current','FB._Prior','FB._Prior_2',
-            'PA_Harmonic')
+            'PA_Projected')
 x_vars2 <- c('HR.FB_Current','HR.FB_Prior','HR.FB_Prior_2','Age_Projected',
             'Pos_Group_Current','MLB_Service_Projected','ISO_Current',
             'ISO_Prior','ISO_Prior_2','Pull._Current','Pull._Prior','Pull._Prior_2',
             'LD._Current','LD._Prior','LD._Prior_2','FB._Current','FB._Prior','FB._Prior_2',
-            'PA_Harmonic')
+            'PA_Projected')
 
 
 list_of_errors <- list()
@@ -651,7 +652,7 @@ x_vars <- c('AVG_Current','AVG_Prior','AVG_Prior_2','FB._Current','FB._Prior','F
             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-            'F.Strike._Prior_2','PA_Harmonic')
+            'F.Strike._Prior_2','PA_Projected')
 x_vars2 <- c('AVG_Current','AVG_Prior','AVG_Prior_2','FB._Current','FB._Prior','FB._Prior_2',
             'GB._Current','GB._Prior','GB._Prior_2','LD._Current','LD._Prior','LD._Prior_2',
             'Hard._Current','Hard._Prior','Hard._Prior_2','Spd_Current','Spd_Prior','Spd_Prior_2',
@@ -660,7 +661,7 @@ x_vars2 <- c('AVG_Current','AVG_Prior','AVG_Prior_2','FB._Current','FB._Prior','
             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-            'F.Strike._Prior_2','PA_Harmonic')
+            'F.Strike._Prior_2','PA_Projected')
 list_of_errors <- list()
 list_of_mapes <- list()
 for (i in 1:6)
@@ -710,7 +711,7 @@ x_vars <- c('wRC._Current','wRC._Prior','wRC._Prior_2','FB._Current','FB._Prior'
             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-            'F.Strike._Prior_2','PA_Harmonic')
+            'F.Strike._Prior_2','PA_Projected')
 x_vars2 <- c('wRC._Current','wRC._Prior','wRC._Prior_2','FB._Current','FB._Prior','FB._Prior_2',
              'GB._Current','GB._Prior','GB._Prior_2','LD._Current','LD._Prior','LD._Prior_2',
              'Hard._Current','Hard._Prior','Hard._Prior_2','Spd_Current','Spd_Prior','Spd_Prior_2',
@@ -719,7 +720,7 @@ x_vars2 <- c('wRC._Current','wRC._Prior','wRC._Prior_2','FB._Current','FB._Prior
              'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
              'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
              'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-             'F.Strike._Prior_2','PA_Harmonic')
+             'F.Strike._Prior_2','PA_Projected')
 list_of_errors <- list()
 list_of_mapes <- list()
 for (i in 1:6)
@@ -769,7 +770,7 @@ x_vars <- c('wOBA_Current','wOBA_Prior','wOBA_Prior_2','FB._Current','FB._Prior'
             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-            'F.Strike._Prior_2','PA_Harmonic')
+            'F.Strike._Prior_2','PA_Projected')
 x_vars2 <- c('wOBA_Current','wOBA_Prior','wOBA_Prior_2','FB._Current','FB._Prior','FB._Prior_2',
              'GB._Current','GB._Prior','GB._Prior_2','LD._Current','LD._Prior','LD._Prior_2',
              'Hard._Current','Hard._Prior','Hard._Prior_2','Spd_Current','Spd_Prior','Spd_Prior_2',
@@ -778,7 +779,7 @@ x_vars2 <- c('wOBA_Current','wOBA_Prior','wOBA_Prior_2','FB._Current','FB._Prior
              'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
              'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
              'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-             'F.Strike._Prior_2','PA_Harmonic')
+             'F.Strike._Prior_2','PA_Projected')
 list_of_errors <- list()
 list_of_mapes <- list()
 for (i in 1:6)
@@ -831,7 +832,7 @@ x_vars <- c('OBP_Current','OBP_Prior','OBP_Prior_2','FB._Current','FB._Prior','F
             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-            'F.Strike._Prior_2','PA_Harmonic')
+            'F.Strike._Prior_2','PA_Projected')
 x_vars2 <- c('OBP_Current','OBP_Prior','OBP_Prior_2','FB._Current','FB._Prior','FB._Prior_2',
              'GB._Current','GB._Prior','GB._Prior_2','LD._Current','LD._Prior','LD._Prior_2',
              'Hard._Current','Hard._Prior','Hard._Prior_2','Spd_Current','Spd_Prior','Spd_Prior_2',
@@ -840,7 +841,7 @@ x_vars2 <- c('OBP_Current','OBP_Prior','OBP_Prior_2','FB._Current','FB._Prior','
              'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
              'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
              'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-             'F.Strike._Prior_2','PA_Harmonic')
+             'F.Strike._Prior_2','PA_Projected')
 list_of_errors <- list()
 list_of_mapes <- list()
 for (i in 1:6)
@@ -890,7 +891,7 @@ x_vars <- c('SLG_Current','SLG_Prior','SLG_Prior_2','FB._Current','FB._Prior','F
             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-            'F.Strike._Prior_2','PA_Harmonic')
+            'F.Strike._Prior_2','PA_Projected')
 x_vars2 <- c('SLG_Current','SLG_Prior','SLG_Prior_2','FB._Current','FB._Prior','FB._Prior_2',
              'GB._Current','GB._Prior','GB._Prior_2','LD._Current','LD._Prior','LD._Prior_2',
              'Hard._Current','Hard._Prior','Hard._Prior_2','Spd_Current','Spd_Prior','Spd_Prior_2',
@@ -899,7 +900,7 @@ x_vars2 <- c('SLG_Current','SLG_Prior','SLG_Prior_2','FB._Current','FB._Prior','
              'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
              'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
              'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-             'F.Strike._Prior_2','PA_Harmonic')
+             'F.Strike._Prior_2','PA_Projected')
 list_of_errors <- list()
 list_of_mapes <- list()
 for (i in 1:6)
@@ -956,7 +957,7 @@ x_vars <- c('RBI_Per_BIP_Current','RBI_Per_BIP_Prior','RBI_Per_BIP_Prior_2',
             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-            'F.Strike._Prior_2','PA_Harmonic')
+            'F.Strike._Prior_2','PA_Projected')
 x_vars2 <- c('RBI_Per_BIP_Current','RBI_Per_BIP_Prior','RBI_Per_BIP_Prior_2',
              'FB._Current','FB._Prior','FB._Prior_2',
              'GB._Current','GB._Prior','GB._Prior_2','LD._Current',
@@ -966,7 +967,7 @@ x_vars2 <- c('RBI_Per_BIP_Current','RBI_Per_BIP_Prior','RBI_Per_BIP_Prior_2',
              'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
              'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
              'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-             'F.Strike._Prior_2','PA_Harmonic')
+             'F.Strike._Prior_2','PA_Projected')
 list_of_errors <- list()
 list_of_mapes <- list()
 for (i in 1:6)
@@ -998,7 +999,6 @@ future_preds <- future_preds %>%
   mutate(RBI = RBI_Per_BIP*(BIP - SF) + (1.565*HR) + SF,
          RBI_Lower = RBI_Per_BIP_Lower*(BIP_Lower - SF) + (1.565*HR_Lower) + SF,
          RBI_Upper = RBI_Per_BIP_Upper*(BIP_Upper - SF) + (1.565*HR_Upper) + SF)
-##############################################################################
 #######################################################################################
 # Projecting Runs Per TOB
 hitters2 <- add_projected_prior_seasons(hitters)
@@ -1021,7 +1021,7 @@ x_vars <- c('Runs_Per_TOB_Current','Runs_Per_TOB_Prior','Runs_Per_TOB_Prior_2',
             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-            'F.Strike._Prior_2','PA_Harmonic')
+            'F.Strike._Prior_2','PA_Projected')
 x_vars2 <- c('Runs_Per_TOB_Current','Runs_Per_TOB_Prior','Runs_Per_TOB_Prior_2',
              'FB._Current','FB._Prior','FB._Prior_2',
              'GB._Current','GB._Prior','GB._Prior_2','LD._Current',
@@ -1031,7 +1031,7 @@ x_vars2 <- c('Runs_Per_TOB_Current','Runs_Per_TOB_Prior','Runs_Per_TOB_Prior_2',
              'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
              'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
              'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-             'F.Strike._Prior_2','PA_Harmonic')
+             'F.Strike._Prior_2','PA_Projected')
 list_of_errors <- list()
 list_of_mapes <- list()
 for (i in 1:6)
@@ -1080,7 +1080,8 @@ future_preds %>%
          wRC. = round(wRC.)) %>% View()
 
 projection_plot(future_preds, 'Jose Martinez', 'wRC.','wRC._Upper','wRC._Lower')
-
+plot_past_future_comp(offense, future_preds, 'Manny Machado','Bryce Harper',
+                      'wRC.','wRC._Lower','wRC._Upper')
 projection_comp_plot1(future_preds,'Ben Gamel','Buster Posey','wRC.','wRC._Upper','wRC._Lower')
 projection_comp_plot2(future_preds,'Ben Gamel','Buster Posey','wRC.','wRC._Upper','wRC._Lower')
 
@@ -1089,10 +1090,9 @@ past_player_performance_comp1(offense, 'Christian Yelich','Mike Trout','wRC.')
 
 plot_past_future(offense, future_preds, 'Michael Conforto', 'HR','HR_Lower','HR_Upper')
 
-plot_past_future_comp(offense, future_preds, 'Mookie Betts','Mike Trout',
+plot_past_future_comp(offense, future_preds, 'Mike Trout','Mookie Betts',
                       'wRC.','wRC._Lower','wRC._Upper')
-plot_past_future_comp(offense, future_preds, 'Manny Machado','Bryce Harper',
-                      'wRC.','wRC._Lower','wRC._Upper')
+
 ##################################################################
 # ranks
 ranking_projected_players(future_preds, 2020) %>% View()
