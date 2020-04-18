@@ -11,6 +11,8 @@ library('GGally')
 library('openxlsx')
 library('caret')
 library('stringr')
+library('rhandsontable')
+library('knitr')
 # set working directory
 setwd('C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Hitting/Data')
 # remove scientific notation 
@@ -1065,20 +1067,45 @@ future_preds <- future_preds %>%
          R_Upper = Runs_Per_TOB_Upper*(Hits_Upper + BB_Upper + HBP - HR_Upper) + HR_Upper)
 ##############################################################################
 # View forecasts
-future_preds %>% 
-  filter(Season_Projected == current_season + 1) %>%
+setwd('C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Hitting/Player_Comparisons/Player_Metrics_Forecasts')
+pred_year <- 2020
+preds <- future_preds %>% 
+  filter(Season_Projected == pred_year) %>%
   mutate(K. = SO / PA,
          BB. = BB / PA) %>%
   select(Name,Season_Projected,Pos_Group_Current,PA,AB,Hits,
          HR_Lower,HR,HR_Upper,BB,SO,K., BB.,AVG,OBP,SLG,OPS,ISO,BABIP,wOBA,
          wRC.,wRC._Lower,wRC._Upper,RBI_Lower,RBI,RBI_Upper,R_Lower,R,R_Upper) %>% 
-  arrange(Season_Projected, -OPS) %>%
+  arrange(Season_Projected, Name) %>%
   mutate_if(is.numeric, round, 3) %>%
-  mutate(PA = round(PA), AB = round(AB), 
-         Hits = round(Hits), HR = round(HR),
-         BB = round(BB), SO = round(SO), 
-         wRC. = round(wRC.)) %>% View()
+  mutate(PA = as.integer(PA), AB = as.integer(AB), 
+         Hits = as.integer(Hits), HR = as.integer(HR),
+         BB = as.integer(BB), SO = as.integer(SO), 
+         wRC. = as.integer(wRC.), RBI = as.integer(RBI),
+         R = as.integer(R), Season_Projected = as.integer(Season_Projected)) %>%
+  rename(Pos_Group = 'Pos_Group_Current', Season = 'Season_Projected')
+rhandsontable(preds, width = 2550, height = 2000) %>%
+  hot_cols(columnSorting = TRUE) %>%
+  hot_cols("float", format = "0.000") %>%
+  hot_cols("int", format = "0") %>%
+  hot_cols(colWidths = 135) %>%
+  hot_rows(rowHeights = 5)
 
+########################################################################
+# ranks
+setwd('C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Hitting/Player_Comparisons/Player_Metrics_Forecasts')
+rank_year <- 2020
+ranks <- ranking_projected_players(future_preds, rank_year)
+rhandsontable(ranks, width = 2560, height = 500) %>%
+  hot_cols(columnSorting = TRUE) %>%
+  hot_cols("float", format = "0.000") %>%
+  hot_cols("int", format = "0") %>%
+  hot_cols(colWidths = 135) %>%
+  hot_rows(rowHeights = 5)
+
+#######################################################################
+# Visualizations
+setwd('C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Hitting/Player_Comparisons/Plots')
 projection_plot(future_preds, 'Jose Martinez', 'wRC.','wRC._Upper','wRC._Lower')
 plot_past_future_comp(offense, future_preds, 'Manny Machado','Bryce Harper',
                       'wRC.','wRC._Lower','wRC._Upper')
@@ -1092,20 +1119,16 @@ plot_past_future(offense, future_preds, 'Michael Conforto', 'HR','HR_Lower','HR_
 
 plot_past_future_comp(offense, future_preds, 'Mike Trout','Mookie Betts',
                       'wRC.','wRC._Lower','wRC._Upper')
-
-##################################################################
-# ranks
-ranking_projected_players(future_preds, 2020) %>% View()
-
+#############################################################################
 # Which players are projected higher, lower for next season
+current_season = 2019
 all <- plot_past_future_comp(offense, future_preds, 'Buster Posey', 'Evan Longoria',
                              'wRC.','wRC._Lower','wRC._Upper')
-all <- all %>% filter(Season >= 2019, Season <= 2020)
+all <- all %>% filter(Season >= current_season, Season <= current_season + 1)
 list_of_names <- unique(all$Name)
 list <- list()
 i = 1
 stat = 'wRC.'
-current_season = 2019
 for (name in list_of_names)
 {
   old_value <- all %>% 
