@@ -586,11 +586,11 @@ ranking_projected_players <- function(future_data, season_projected)
   
   ranks <- ranks %>% 
     select(HR, RBI, R, AVG, OBP, SLG, OPS, ISO, wOBA, wRC., BB., K., BABIP, Hits) %>%
-    mutate(Total = rowMeans(.))
+    mutate(Mean_Rank = round(rowMeans(.),2))
   ranks$Name <- names
   ranks <- ranks %>%
-    select(Name,Total,AVG,OBP,SLG,OPS,HR,RBI,R,ISO,wOBA,wRC.,BB.,K.,BABIP,Hits)
-  return(ranks %>% arrange(Total))
+    select(Name,Mean_Rank,AVG,OBP,SLG,OPS,HR,RBI,R,ISO,wOBA,wRC.,BB.,K.,BABIP,Hits)
+  return(ranks %>% arrange(Mean_Rank))
 }
 
 age_curves_delta_method <- function(offense_data, stat, col1, col2)
