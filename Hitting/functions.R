@@ -258,7 +258,7 @@ train_models <- function(historical_data, y_var, x_vars, x_vars2, model_type, tu
                           method = model_type, metric = 'MAE', data = train,
                           #tuneGrid = parametersGrid,
                           tuneLength = tuneLength, verbose = F,
-                          weights = PA_Harmonic, trControl = control)
+                          weights = PA_Projected, trControl = control)
     #plot(model)
     #summary(model)
     model_preds <- predict(model, test, interval = "confidence")
@@ -341,7 +341,7 @@ predict_future_years <- function(historical_data, future_data, y_var, x_vars, x_
                           method = model_type, metric = 'MAE', data = train,
                           #tuneGrid = parametersGrid,
                           tuneLength = tuneLength, verbose = F,
-                          weights = PA_Harmonic, trControl = control)
+                          weights = PA_Projected, trControl = control)
   if (model_type == 'glmnet')
   {
     coefs_data <- as.data.frame(as.matrix(coef(model$finalModel,model$bestTune$lambda)))
@@ -524,20 +524,20 @@ plot_past_future <- function(past_offense, future_offense, player_name, stat, lo
 
 plot_past_future_comp <- function(past_offense, future_offense, player1, player2, stat, lower, upper)
 {
-  if (grepl('.',stat))
-  {
-    stat2 <- str_replace(stat, ".$", "+")
-  }
+  #if (grepl('.',stat))
+  #{
+    #stat2 <- str_replace(stat, ".$", "+")
+  #}
   
   future_offense2 <- future_offense %>%
     rename(Season = 'Season_Projected', H = 'Hits',
            playerid = 'Playerid') %>%
-    select(Name, Season, PA, AB, HR, H, AVG, OBP, SLG, ISO, wOBA, BABIP, 
+    select(Name, Season, PA, AB, HR, H, AVG, RBI, R, OBP, SLG, OPS, ISO, wOBA, BABIP, 
            wRC., K., BB., OPS, playerid) 
   
   all <- past_offense %>%
-    select(Name, Season, PA, AB, HR, H, AVG, OBP, SLG, ISO, wOBA, BABIP, wRC., 
-           K., BB., OPS, playerid) %>%
+    select(Name, Season, PA, AB, HR, H, AVG, RBI, R, OBP, SLG, OPS, ISO, wOBA, BABIP, 
+           wRC., K., BB., OPS, playerid) %>%
     bind_rows(future_offense2) %>%
     mutate(Time = case_when(Season <= current_season ~ 'past', 
                             Season > current_season ~ 'future')) %>% 
@@ -548,7 +548,8 @@ plot_past_future_comp <- function(past_offense, future_offense, player1, player2
                                  'ISO_Lower','ISO_Upper','wOBA_Lower','wOBA_Upper',
                                  'BABIP_Lower','BABIP_Upper','wRC._Lower',
                                  'wRC._Upper','K._Lower','K._Upper','BB._Lower',
-                                 'BB._Upper','OPS_Lower','OPS_Upper')], 
+                                 'BB._Upper','OPS_Lower','OPS_Upper','RBI_Upper',
+                                 'RBI_Lower','R_Upper','R_Lower')], 
               by = c('playerid' = 'Playerid', 'Season' = 'Season_Projected'))
   subset <- all %>% 
     filter(Name %in%  c(player1, player2)) 
@@ -561,8 +562,8 @@ plot_past_future_comp <- function(past_offense, future_offense, player1, player2
     geom_point(size = 3) + facet_grid( ~Name) + 
     geom_line(aes(y = !! lower), colour = 'red', linetype = "twodash") + 
     geom_line(aes(y = !! upper), colour = 'red', linetype = "twodash") + 
-    ggtitle(paste0(player2," Vs ", player1, " Past & Projected ", stat2)) + 
-    xlab('Season') + ylab(stat2) + 
+    ggtitle(paste0(player2," Vs ", player1, " Past & Projected ", stat)) + 
+    xlab('Season') + ylab(stat) + 
     scale_x_continuous(breaks = round(seq(min(all$Season), max(all$Season), by = 2))))
   return(all)
 }
@@ -574,20 +575,21 @@ ranking_projected_players <- function(future_data, season_projected)
     mutate(K. = SO / PA,
            BB. = BB / PA) %>%
     select(Name,Season_Projected,Pos_Group_Current,PA,AB,Hits,
-           HR,BB,SO,K., BB.,AVG,OBP,SLG,OPS,ISO,BABIP,wOBA,wRC.) %>% 
+           HR,RBI,R,BB,SO,K., BB.,AVG,OBP,SLG,OPS,ISO,BABIP,wOBA,wRC.) %>% 
     arrange(Season_Projected, Name)
   
-  names = ranks_2020$Name
+  names <- ranks_2020$Name
   ranks_2020 <- ranks_2020[,4:ncol(ranks_2020)]
   ranks <- data.frame(apply(-ranks_2020, 2, rank, ties.method='min'))
   ranks$SO = (nrow(ranks) + 1) - ranks$SO
   ranks$K. = (nrow(ranks) + 1) - ranks$K.
   
   ranks <- ranks %>% 
-    select(HR, AVG, OBP, SLG, OPS, ISO, wOBA, wRC., BB., K., BABIP, Hits) %>%
+    select(HR, RBI, R, AVG, OBP, SLG, OPS, ISO, wOBA, wRC., BB., K., BABIP, Hits) %>%
     mutate(Total = rowMeans(.))
-  ranks$Name = names
-  
+  ranks$Name <- names
+  ranks <- ranks %>%
+    select(Name,Total,AVG,OBP,SLG,OPS,HR,RBI,R,ISO,wOBA,wRC.,BB.,K.,BABIP,Hits)
   return(ranks %>% arrange(Total))
 }
 
