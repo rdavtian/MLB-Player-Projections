@@ -1084,24 +1084,37 @@ preds <- future_preds %>%
          wRC. = as.integer(wRC.), RBI = as.integer(RBI),
          R = as.integer(R), Season_Projected = as.integer(Season_Projected)) %>%
   rename(Pos_Group = 'Pos_Group_Current', Season = 'Season_Projected')
-rhandsontable(preds, width = 2550, height = 2000) %>%
-  hot_cols(columnSorting = TRUE) %>%
-  hot_cols("float", format = "0.000") %>%
-  hot_cols("int", format = "0") %>%
-  hot_cols(colWidths = 135) %>%
-  hot_rows(rowHeights = 5)
 
+kable(preds, row.names = F) %>%
+kableExtra::kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                          full_width = F, position = "left", fixed_thead = T) %>%
+  kableExtra::footnote(symbol = paste0(pred_year," Player Metric Forecasts")) %>%
+  kableExtra::scroll_box(width = "200%", height = "100%") %>%
+  kableExtra::save_kable(file = paste0(pred_year,"_Player_Metric_Forecasts.html"))
+  
+#rhandsontable(preds, width = 2550, height = 2000) %>%
+#hot_cols(columnSorting = TRUE) %>%
+#hot_cols("float", format = "0.000") %>%
+#hot_cols("int", format = "0") %>%
+#hot_cols(colWidths = 135) %>%
+#hot_rows(rowHeights = 5)
 ########################################################################
 # ranks
-setwd('C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Hitting/Player_Comparisons/Player_Metrics_Forecasts')
+setwd('C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Hitting/Player_Comparisons/Player_Rankings_Forecasts')
 rank_year <- 2020
 ranks <- ranking_projected_players(future_preds, rank_year)
-rhandsontable(ranks, width = 2560, height = 500) %>%
-  hot_cols(columnSorting = TRUE) %>%
-  hot_cols("float", format = "0.000") %>%
-  hot_cols("int", format = "0") %>%
-  hot_cols(colWidths = 135) %>%
-  hot_rows(rowHeights = 5)
+kable(ranks, row.names = F) %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                            full_width = F, position = "left", fixed_thead = T) %>%
+  kableExtra::footnote(symbol = paste0(rank_year," Player Ranking Forecasts")) %>%
+  kableExtra::scroll_box(width = "200%", height = "100%") %>%
+  kableExtra::save_kable(file = paste0(rank_year,"_Player_Ranking_Forecasts.html"))
+#rhandsontable(ranks, width = 2560, height = 500) %>%
+  #hot_cols(columnSorting = TRUE) %>%
+  #hot_cols("float", format = "0.000") %>%
+  #hot_cols("int", format = "0") %>%
+  #hot_cols(colWidths = 135) %>%
+  #hot_rows(rowHeights = 5)
 
 #######################################################################
 # Visualizations
@@ -1117,8 +1130,8 @@ past_player_performance_comp1(offense, 'Christian Yelich','Mike Trout','wRC.')
 
 plot_past_future(offense, future_preds, 'Michael Conforto', 'HR','HR_Lower','HR_Upper')
 
-plot_past_future_comp(offense, future_preds, 'Mike Trout','Mookie Betts',
-                      'wRC.','wRC._Lower','wRC._Upper')
+plot_past_future_comp(offense, future_preds, 'Javier Baez','Nicholas Castellanos',
+                      'BABIP','BABIP_Lower','BABIP_Upper')
 #############################################################################
 # Which players are projected higher, lower for next season
 current_season = 2019
@@ -1148,3 +1161,7 @@ df <- df %>%
          new_value = as.numeric(new_value), 
          pct_change = as.numeric(pct_change)) %>%
   arrange(-pct_change) %>% View()
+
+preds %>% inner_join(offense[offense$Season %in% c(2017,2018,2019),c('Name','Team')],
+                     by = c('Name')) %>%
+  filter(Team == "Yankees") %>% distinct() %>% View()
