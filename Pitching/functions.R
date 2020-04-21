@@ -214,54 +214,220 @@ merge_hitting_stats <- function(hitters_data, offensive_stats)
   return(stats)
 }
 
-# Split hitters data in train/test sets by splitting on most recent season completed
-historical_future_split <- function(hitters_data, recent)
+merge_pitching_stats <- function(pitchers_data, pitching_stats)
 {
-  historical <- hitters_data %>%
+  stats <- pitchers_data %>% 
+    left_join(pitching[,c('Season','Name',pitching_stats)], by = c('Season_Current' = 'Season','Name'))
+  colnames(stats)[(ncol(stats) - length(pitching_stats) + 1):ncol(stats)] <- 
+    paste0(colnames(stats)[(ncol(stats) - length(pitching_stats) + 1):ncol(stats)],"_Current")
+  
+  stats <- stats %>%
+    left_join(pitching[,c('Season','Name',pitching_stats)], by = c('Season_Prior' = 'Season','Name'))
+  colnames(stats)[(ncol(stats) - length(pitching_stats) + 1):ncol(stats)] <- 
+    paste0(colnames(stats)[(ncol(stats) - length(pitching_stats) + 1):ncol(stats)],"_Prior")
+  
+  stats <- stats %>%
+    left_join(pitching[,c('Season','Name',pitching_stats)], by = c('Season_Prior_2' = 'Season','Name'))
+  colnames(stats)[(ncol(stats) - length(pitching_stats) + 1):ncol(stats)] <- 
+    paste0(colnames(stats)[(ncol(stats) - length(pitching_stats) + 1):ncol(stats)],"_Prior_2")
+  
+  #stats <- stats %>%
+  #left_join(pitching[,c('Season','Name',pitching_stats)], by = c('Season_Prior_3' = 'Season','Name'))
+  #colnames(stats)[(ncol(stats) - length(pitching_stats) + 1):ncol(stats)] <- 
+  #paste0(colnames(stats)[(ncol(stats) - length(pitching_stats) + 1):ncol(stats)],"_Prior_3")
+  
+  stats <- stats %>%
+    left_join(pitching[,c('Season','Name',pitching_stats)], by = c('Season_Projected' = 'Season','Name'))
+  colnames(stats)[(ncol(stats) - length(pitching_stats) + 1):ncol(stats)] <- 
+    paste0(colnames(stats)[(ncol(stats) - length(pitching_stats) + 1):ncol(stats)],"_Projected")
+  
+  stats <- stats %>%
+    tidyr::fill(Pos_Group_Current, .direction = 'downup') %>%
+    select(-Pos_Group_Prior, -Pos_Group_Prior_2) %>%
+    mutate(Pos_Group_Projected = dplyr::coalesce(Pos_Group_Current, Pos_Group_Projected))
+  
+  return(stats)
+}
+
+# Split hitters data in train/test sets by splitting on most recent season completed
+historical_future_split <- function(pitchers_data, recent)
+{
+  historical <- pitchers_data %>%
     filter(Season_Current < recent) %>%
     filter(MLB_Service_Current >= 3) %>%
     filter(Season_Projected <= recent)
-  future <- hitters_data %>%
+  future <- pitchers_data %>%
     filter(Season_Current >= recent)
   return(list(historical, future))
 }
 
-merge_hitting_stats <- function(pitchers_data, pitching_stats)
+# Caret Train modeling function
+# Given y_var and set of explanatory vars
+train_models <- function(historical_data, y_var, x_vars, x_vars2, model_type, tuneLength, years_out)
 {
-  pitchers_data <- pitchers_data %>% 
-    left_join(positions[,c('Season','playerid','Pos')], 
-              by = c('Season_Current'='Season','Playerid'='playerid')) %>%
-    mutate(Pos_Group_Current = case_when(Pos %in% c('LF','CF','RF') ~ 'OF',
-                                         Pos %in% c('1B','3B') ~ 'CornerIF',
-                                         Pos %in% c('2B','SS') ~ 'MiddleIF',
-                                         Pos %in% c('C') ~ 'C',
-                                         Pos %in% c('P') ~ 'P')) %>% select(-Pos) %>% 
-    tidyr::fill(Pos_Group_Current, .direction = 'downup')
+  historical_years_out <- historical_data %>% 
+    filter(Season_Projected - Season_Current == years_out) %>%
+    select(Name, Season_Current, Season_Projected, y_var, x_vars2)
+  historical_years_out <- tidyr::drop_na(historical_years_out)
   
-  stats <- hitters_data %>% 
-    left_join(offense[,c('Season','Name',offensive_stats)], by = c('Season_Current' = 'Season','Name'))
-  colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)] <- 
-    paste0(colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)],"_Current")
+  set.seed(43)
+  until = 2010
+  project = until + years_out
+  i = 1
+  mape_list <- list()
+  coefs_list <- list()
+  test_datasets <- list()
+  rmse_vec <- c()
+  resid_list <- list()
   
-  stats <- stats %>%
-    left_join(offense[,c('Season','Name',offensive_stats)], by = c('Season_Prior' = 'Season','Name'))
-  colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)] <- 
-    paste0(colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)],"_Prior")
+  while (project <= current_season) 
+  {
+    train <- historical_years_out %>%
+      filter(Season_Projected <= until)
+    test <- historical_years_out %>%
+      filter(Season_Projected == until + years_out)
+    
+    model <- caret::train(as.formula(paste0(y_var, " ~ ", paste0(x_vars[-length(x_vars)], collapse = " + "))), 
+                          method = model_type, metric = 'MAE', data = train,
+                          #tuneGrid = parametersGrid,
+                          tuneLength = tuneLength, verbose = F,
+                          weights = IP_Harmonic, trControl = control)
+    #plot(model)
+    #summary(model)
+    model_preds <- predict(model, test, interval = "confidence")
+    test$Stat_Projected_Preds <- model_preds
+    test_datasets[[i]] <- test
+    actual <- test %>% select(y_var) %>% pull()
+    mape <- (abs(actual - model_preds) / (actual))*100
+    rmse <- sqrt(mean((actual - model_preds)**2))
+    resid <- actual - model_preds
+    mape_data <- data.frame(Season_Projection = test$Season_Projected, Mape = mape)
+    if (model_type == 'glmnet')
+    {
+      coefs_data <- as.data.frame(as.matrix(coef(model$finalModel,model$bestTune$lambda)))
+      names(coefs_data) <- 'coefficients'
+    }
+    else if (model_type == 'bayesglm')
+    {
+      coefs_data <- as.data.frame(as.matrix(coef(model$finalModel)))
+      names(coefs_data) <- 'coefficients'
+    }
+    else if (model_type %in% c('xgbTree','xgbLinear'))
+    {
+      imp2 <- varImp(model)
+      print(barchart(sort(rowMeans(imp2$importance), decreasing = T), 
+                     main = "Variable Importance", xlab = "Average Level of Importance",
+                     ylab = "Variables"))
+      coefs_data <- as.data.frame(NA)
+    } 
+    else if (model_type %in% c('rf'))
+    {
+      imp2 <- model$finalModel
+      print(barchart(sort(rowMeans(imp2$importance), decreasing = T), 
+                     main = "RF Variable Importance", xlab = "Average Level of Importance",
+                     ylab = "Variables"))
+      coefs_data <- as.data.frame(NA) 
+    } 
+    else if (model_type %in% c('gbm'))
+    {
+      imp2 <- summary(model)
+      print(imp2)
+      barplot(sort(imp2$rel.inf, decreasing = T), horiz = T, col = 'cyan',
+              main = "GBM Variable Importance", xlab = "Average Level of Importance",
+              ylab = "Variables")
+      coefs_data <- as.data.frame(NA) 
+    } else {
+      coefs_data <- as.data.frame(NA)
+    }
+    mape_list[[i]] <- mape_data
+    coefs_list[[i]] <- coefs_data
+    resid_list[[i]] <- resid
+    rmse_vec <- append(rmse_vec, rmse)
+    #print(model)
+    until = until + 1
+    i = i + 1
+    project = project + 1
+  }
+  return(list(mape_list, coefs_list, rmse_vec, resid_list, test_datasets, model))  
+}
+
+# Choose arguement of season to train model to and which to predict future years,
+# store predictions for next year and use those values to predict the year after
+predict_future_years <- function(historical_data, future_data, y_var, x_vars, x_vars2,
+                                 model_type, tuneLength, years_out, errors, err_multiplier)
+{
+  for (i in 1:length(errors))
+  {
+    keep <- errors[[i]] <= quantile(errors[[1]], c(0.9)) & errors[[i]] >= quantile(errors[[1]], c(0.1))
+    errors[[i]] <- errors[[i]][keep]
+    
+  }
+  train <- historical_data %>%
+    select(Name, Season_Current, Season_Projected, y_var, x_vars2, Playerid)
+  train <- tidyr::drop_na(train)
   
-  stats <- stats %>%
-    left_join(offense[,c('Season','Name',offensive_stats)], by = c('Season_Prior_2' = 'Season','Name'))
-  colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)] <- 
-    paste0(colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)],"_Prior_2")
+  test <- future_data %>% 
+    select(Name, Season_Current, Season_Projected, x_vars2[-length(x_vars2)], Playerid)
+  test <- tidyr::drop_na(test)
   
-  #stats <- stats %>%
-  #left_join(offense[,c('Season','Name',offensive_stats)], by = c('Season_Prior_3' = 'Season','Name'))
-  #colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)] <- 
-  #paste0(colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)],"_Prior_3")
+  model <- caret::train(as.formula(paste0(y_var, " ~ ", paste0(x_vars[-length(x_vars)], collapse = " + "))), 
+                        method = model_type, metric = 'MAE', data = train,
+                        #tuneGrid = parametersGrid,
+                        tuneLength = tuneLength, verbose = F,
+                        weights = IP_Harmonic, trControl = control)
+  if (model_type == 'glmnet')
+  {
+    coefs_data <- as.data.frame(as.matrix(coef(model$finalModel,model$bestTune$lambda)))
+    names(coefs_data) <- 'coefficients'
+  }
+  else if (model_type == 'bayesglm')
+  {
+    coefs_data <- as.data.frame(as.matrix(coef(model$finalModel)))
+    names(coefs_data) <- 'coefficients'
+  }
+  else if (model_type %in% c('xgbTree','xgbLinear'))
+  {
+    imp2 <- varImp(model)
+    print(barchart(sort(rowMeans(imp2$importance), decreasing = T), 
+                   main = "Variable Importance", xlab = "Average Level of Importance",
+                   ylab = "Variables"))
+    coefs_data <- as.data.frame(NA)
+  }
+  else if (model_type %in% c('rf'))
+  {
+    imp2 <- model$finalModel
+    print(barchart(sort(rowMeans(imp2$importance), decreasing = T), 
+                   main = "RF Variable Importance", xlab = "Average Level of Importance",
+                   ylab = "Variables"))
+    coefs_data <- as.data.frame(NA) 
+  }
+  else if (model_type %in% c('gbm'))
+  {
+    imp2 <- summary(model)
+    print(imp2)
+    barplot(sort(imp2$rel.inf, decreasing = T), horiz = T, col = 'cyan',
+            main = "GBM Variable Importance", xlab = "Average Level of Importance",
+            ylab = "Variables")
+    coefs_data <- as.data.frame(NA) 
+  } else {
+    coefs_data <- as.data.frame(NA)
+  }
   
-  stats <- stats %>%
-    left_join(offense[,c('Season','Name',offensive_stats)], by = c('Season_Projected' = 'Season','Name'))
-  colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)] <- 
-    paste0(colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)],"_Projected")
-  
-  return(stats)
+  #plot(model)
+  #summary(model)
+  model_preds <- predict(model, test, interval = "confidence")
+  test$Stat_Projected <- model_preds * err_multiplier
+  test <- test %>%
+    mutate(err = case_when(Season_Projected - Season_Current == 1 ~ mean(sample(errors[[1]], 200, replace = F)),
+                           Season_Projected - Season_Current == 2 ~ mean(sample(errors[[2]], 200, replace = F)),
+                           Season_Projected - Season_Current == 3 ~ mean(sample(errors[[3]], 200, replace = T)),
+                           Season_Projected - Season_Current == 4 ~ mean(sample(errors[[4]], 200, replace = T)),
+                           Season_Projected - Season_Current == 5 ~ mean(sample(errors[[5]], 200, replace = T)),
+                           Season_Projected - Season_Current == 6 ~ mean(sample(errors[[6]], 200, replace = T)))) %>%
+    mutate(Stat_Projected_Upper = Stat_Projected + (2*abs(err*err_multiplier)),
+           Stat_Projected_Lower = Stat_Projected - (2*abs(err*err_multiplier)),
+           Stat_Projected_Lower = ifelse(Stat_Projected_Lower < 0, 0, Stat_Projected_Lower)
+    ) %>%
+    select(-err) %>% filter(Season_Projected - Season_Current <= years_out)
+  return(list(test, model))
 }
