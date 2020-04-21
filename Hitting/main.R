@@ -1162,6 +1162,7 @@ df <- df %>%
          pct_change = as.numeric(pct_change)) %>%
   arrange(-pct_change) %>% View()
 
+# Take a look at player predictions from specific teams
 preds %>% inner_join(offense[offense$Season %in% c(2017,2018,2019),c('Name','Team')],
                      by = c('Name')) %>%
   filter(Team == "Yankees") %>% distinct() %>% View()
