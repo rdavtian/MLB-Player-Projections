@@ -36,7 +36,11 @@ pitching$Start.IP <- ifelse((is.na(pitching$Start.IP)) & (pitching$IP - pitching
 pitching$Relief.IP <- ifelse((is.na(pitching$Relief.IP)) & (pitching$IP - pitching$Start.IP != 0), pitching$IP - pitching$Start.IP, pitching$Relief.IP)
 pitching <- pitching %>% 
   mutate(Pos_Group = case_when(Start.IP > Relief.IP ~ 'SP',
-                               Start.IP <= Relief.IP ~ 'RP'))
+                               Start.IP <= Relief.IP ~ 'RP'),
+         IP_PerG = IP / G,
+         TrueFB. = FB. - (FB. * IFFB.),
+         TrueIFFB. = (FB. * IFFB.),
+         xBABIP = (.128*FB.) + (.234*GB.) + (0.700*LD.))
 
 sheetNames <- sheets(salaries)
 for(i in 1:length(sheetNames))
@@ -46,14 +50,15 @@ for(i in 1:length(sheetNames))
 salaries <- rbind(salary08,salary09,salary10,salary11,salary12,salary13,salary14,
                   salary15,salary16,salary17,salary18,salary19)
 salaries <- salaries %>%
-  mutate(Pos_Group = case_when(Pos %in% c('LF','CF','RF') ~ 'OF',
+  mutate(Pos_Group_Current = case_when(Pos %in% c('LF','CF','RF') ~ 'OF',
                                Pos %in% c('1B','3B') ~ 'CornerIF',
                                Pos %in% c('2B','SS') ~ 'MiddleIF',
                                Pos %in% c('C') ~ 'C',
                                Pos %in% c('OF') ~ 'OF',
                                Pos %in% c('DH') ~ 'DH',
-                               Pos %in% c('SP','RP','P') ~ 'P')) %>% 
-  select(-Pos) %>% filter(Pos_Group == 'P')
+                               Pos %in% c('SP','P') ~ 'SP',
+                               Pos %in% c('RP') ~ 'RP')) %>% 
+  select(-Pos) %>% filter(Pos_Group_Current %in% c('SP','RP'))
 salaries <- salaries %>% 
   inner_join(pitching[,c('Name','Season','Age')],
             by = c('Name','Season')) %>%
@@ -67,7 +72,8 @@ salaries <- salaries %>%
 pitchers <- add_projection_years(pitchers, 11)
 pitchers2 <- add_projected_prior_seasons(pitchers)
 pitchers2 <- merge_pitching_stats(pitchers2, c('IP','Pos_Group','ERA','FIP',
-                                               'xFIP','BABIP','K.9'))
+                                               'xFIP','BABIP','K.9','xBABIP',
+                                               'WAR','IP_PerG'))
 history_future <- historical_future_split(pitchers2, current_season)
 historical <- history_future[[1]]; future <- history_future[[2]]
 historical <- historical %>% 
@@ -76,16 +82,16 @@ historical <- historical %>%
 #################################################################################
 # Visualizations
 vars <- c('BABIP_Current','xBABIP_Prior','xBABIP_Prior_2')
-scatterplot_by_group(historical, 'PA_PerG_Current','PA_PerG_Prior')
+scatterplot_by_group(historical, 'IP_Current','IP_Prior')
 scatterplot_matrix(historical, c('BABIP_Current','BABIP_Prior'))
 correlation_matrix(historical, c('wRC._Current','Hard._Current','wRC._Prior','Soft._Current',
                                  'wRC._Prior_2','GB._Current','BABIP_Prior','LD._Current'))
 
-age_curves(historical, 'Age_Current', 'wOBA_Current')
+age_curves(historical, 'Age_Current', 'xBABIP_Current')
 age_curves(salaries, 'Age_Current', 'adjusted_AAV')
-age_curves_delta_method(offense, 'BABIP','BABIP.x','BABIP.y')
+age_curves_delta_method(pitching, 'BABIP','BABIP.x','BABIP.y')
 
-year_to_year_correlation(pitching, 'BABIP')
+year_to_year_correlation(pitching, 'xBABIP')
 
 values <- as.data.frame(historical[, vars])
 usdm::vif(values)
@@ -96,13 +102,13 @@ parametersGrid <- expand.grid(alpha = seq(0.15, 1, 0.05),
                               lambda = seq(0.005, 1, length = 25))
 control <- trainControl(method = "cv", number = 3)
 parametersGrid <- expand.grid(sparcity = 0.3)
-y_var <- c('ERA_Projected')
-x_vars <- c('ERA_Current','ERA_Prior','ERA_Prior_2',
+y_var <- c('IP_Projected')
+x_vars <- c('IP_Current','IP_Prior','IP_Prior_2',
             'poly(Age_Projected, 2)',
             'Pos_Group_Current','MLB_Service_Projected','IP_Harmonic')
-x_vars2 <- c('ERA_Current','ERA_Prior','ERA_Prior_2',
-             'Age_Projected',
-             'Pos_Group_Current','MLB_Service_Projected','IP_Harmonic')
+x_vars2 <- c('IP_Current','IP_Prior','IP_Prior_2',
+            'Age_Projected',
+            'Pos_Group_Current','MLB_Service_Projected','IP_Harmonic')
 
 x <- train_models(historical, y_var, x_vars, x_vars2, model_type = 'gbm', tuneLength = 3, 
                   years_out = 1)
@@ -116,8 +122,8 @@ coef(model$finalModel)
 #coef(model$finalModel, model$bestTune$lambda)
 tests2 <- tests %>% 
   mutate(Stat_Projected_Preds = Stat_Projected_Preds) %>%
-  rename('ERA_Projected_Preds' = Stat_Projected_Preds) %>%
-  mutate(abs_diff = abs(ERA_Projected - ERA_Projected_Preds))
+  rename('IP_Projected_Preds' = Stat_Projected_Preds) %>%
+  mutate(abs_diff = abs(IP_Projected - IP_Projected_Preds))
 summary(tests2$abs_diff)
 mean(rmses)
 mean(mapes$Mape)
@@ -126,19 +132,21 @@ hist(mapes$Mape, breaks = 100, col = 'cyan', xlim = c(0, 70))
 hist(resid, breaks = 50, col = 'green')
 
 ####################################################################################
-# Projecting PA 
+# Projecting G
+pitchers <- add_projection_years(pitchers, 11)
 pitchers2 <- add_projected_prior_seasons(pitchers)
-pitchers2 <- merge_hitting_stats(pitchers2, c('PA','PA_PerG'))
+pitchers2 <- merge_pitching_stats(pitchers2, c('IP','Pos_Group','G'))
 history_future <- historical_future_split(pitchers2, current_season)
 historical <- history_future[[1]]; future <- history_future[[2]]
 historical <- historical %>% 
-  mutate(PA_Harmonic = 2 / ((1 / PA_Current) + (1 / PA_Projected)))
+  mutate(IP_Harmonic = 2 / ((1 / IP_Current) + (1 / IP_Projected)))
 
-y_var <- c('PA_PerG_Projected')
-x_vars <- c('PA_PerG_Current','PA_PerG_Prior','PA_PerG_Prior_2','poly(Age_Projected, 2)',
-            'Pos_Group_Current','MLB_Service_Projected','PA_Projected')
-x_vars2 <- c('PA_PerG_Current','PA_PerG_Prior','PA_PerG_Prior_2','Age_Projected',
-             'Pos_Group_Current','MLB_Service_Projected','PA_Projected')
+y_var <- c('G_Projected')
+x_vars <- c('G_Current','G_Prior','G_Prior_2','poly(Age_Projected, 2)',
+            'Pos_Group_Current','MLB_Service_Projected','IP_Harmonic')
+x_vars2 <- c('G_Current','G_Prior','G_Prior_2','Age_Projected',
+             'Pos_Group_Current','MLB_Service_Projected','IP_Harmonic')
+
 
 list_of_errors <- list()
 list_of_mapes <- list()
@@ -156,14 +164,66 @@ for (i in 1:6)
 # Run final model through current_season and predict future seasons
 errors <- list_of_errors
 z <- predict_future_years(historical, future, y_var, x_vars, x_vars2, 
-                          model_type = 'gbm', tuneLength = 5, years_out = 6, errors, 150)
+                          model_type = 'gbm', tuneLength = 5, years_out = 6, errors, 1)
 model <- z[[2]]
 #coef(model$finalModel, model$bestTune$lambda)
 
 future_preds <- z[[1]] %>% 
   select(Name, Season_Projected, Age_Projected, Playerid, Pos_Group_Current, Stat_Projected, 
          Stat_Projected_Upper, Stat_Projected_Lower) %>%
-  rename(PA = 'Stat_Projected', PA_Upper = 'Stat_Projected_Upper', 
-         PA_Lower = 'Stat_Projected_Lower')
+  rename(G = 'Stat_Projected', G_Upper = 'Stat_Projected_Upper', 
+         G_Lower = 'Stat_Projected_Lower') 
+#######################################################################################
+####################################################################################
+# Projecting IP
+pitchers <- add_projection_years(pitchers, 11)
+pitchers2 <- add_projected_prior_seasons(pitchers)
+pitchers2 <- merge_pitching_stats(pitchers2, c('IP','Pos_Group','IP_PerG'))
+history_future <- historical_future_split(pitchers2, current_season)
+historical <- history_future[[1]]; future <- history_future[[2]]
+historical <- historical %>% 
+  mutate(IP_Harmonic = 2 / ((1 / IP_Current) + (1 / IP_Projected)))
+
+y_var <- c('IP_PerG_Projected')
+x_vars <- c('IP_PerG_Current','IP_PerG_Prior','IP_PerG_Prior_2','poly(Age_Projected, 2)',
+            'Pos_Group_Current','MLB_Service_Projected','IP_Harmonic')
+x_vars2 <- c('IP_PerG_Current','IP_PerG_Prior','IP_PerG_Prior_2','Age_Projected',
+             'Pos_Group_Current','MLB_Service_Projected','IP_Harmonic')
+
+
+
+list_of_errors <- list()
+list_of_mapes <- list()
+for (i in 1:6)
+{
+  print(i)
+  print('---------------------------------------------------------')
+  x <- train_models(historical, y_var, x_vars, x_vars2, model_type = 'gbm', tuneLength = 5, 
+                    years_out = i)
+  mapes <- do.call(rbind, x[[1]])
+  resid <- unlist(x[[4]])
+  list_of_errors[[i]] <- resid
+  list_of_mapes[[i]] <- mapes
+}
+# Run final model through current_season and predict future seasons
+errors <- list_of_errors
+z <- predict_future_years(historical, future, y_var, x_vars, x_vars2, 
+                          model_type = 'gbm', tuneLength = 5, years_out = 6, errors, 1)
+model <- z[[2]]
+#coef(model$finalModel, model$bestTune$lambda)
+
+future_preds <- z[[1]] %>% 
+  select(Name, Season_Projected, Age_Projected, Playerid, Pos_Group_Current, Stat_Projected, 
+         Stat_Projected_Upper, Stat_Projected_Lower) %>%
+  rename(IP_PerG = 'Stat_Projected', IP_PerG_Upper = 'Stat_Projected_Upper', 
+         IP_PerG_Lower = 'Stat_Projected_Lower') %>%
+  mutate(IP = case_when(Pos_Group_Current == 'RP' ~ IP_PerG * 59,
+                        Pos_Group_Current == 'SP' ~ IP_PerG * 28),
+         IP_Lower = case_when(Pos_Group_Current == 'RP' ~ IP_PerG_Lower * 59,
+                        Pos_Group_Current == 'SP' ~ IP_PerG_Lower * 28),
+         IP_Upper = case_when(Pos_Group_Current == 'RP' ~ IP_PerG_Upper * 59,
+                        Pos_Group_Current == 'SP' ~ IP_PerG_Upper * 28)
+         )
+         
 #######################################################################################
 
