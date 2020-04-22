@@ -1119,7 +1119,7 @@ kable(ranks, row.names = F) %>%
 #######################################################################
 # Visualizations
 setwd('C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Hitting/Player_Comparisons/Plots')
-projection_plot(future_preds, 'Jose Martinez', 'wRC.','wRC._Upper','wRC._Lower')
+projection_plot(future_preds, 'Carlos Correa', 'PA','PA_Upper','PA_Lower')
 plot_past_future_comp(offense, future_preds, 'Manny Machado','Bryce Harper',
                       'wRC.','wRC._Lower','wRC._Upper')
 projection_comp_plot1(future_preds,'Ben Gamel','Buster Posey','wRC.','wRC._Upper','wRC._Lower')
@@ -1128,10 +1128,10 @@ projection_comp_plot2(future_preds,'Ben Gamel','Buster Posey','wRC.','wRC._Upper
 past_player_performance(offense, 'Ian Kinsler', 'wRC.')
 past_player_performance_comp1(offense, 'Christian Yelich','Mike Trout','wRC.')
 
-plot_past_future(offense, future_preds, 'Michael Conforto', 'HR','HR_Lower','HR_Upper')
+plot_past_future(offense, future_preds, 'Carlos Correa', 'PA','PA_Lower','PA_Upper')
 
-plot_past_future_comp(offense, future_preds, 'Javier Baez','Nicholas Castellanos',
-                      'BABIP','BABIP_Lower','BABIP_Upper')
+plot_past_future_comp(offense, future_preds, 'Mookie Betts','Mike Trout',
+                      'wRC.','wRC._Lower','wRC._Upper')
 #############################################################################
 # Which players are projected higher, lower for next season
 current_season = 2019
@@ -1141,7 +1141,7 @@ all <- all %>% filter(Season >= current_season, Season <= current_season + 1)
 list_of_names <- unique(all$Name)
 list <- list()
 i = 1
-stat = 'wRC.'
+stat = 'HR'
 for (name in list_of_names)
 {
   old_value <- all %>% 
@@ -1164,4 +1164,4 @@ df <- df %>%
 
 preds %>% inner_join(offense[offense$Season %in% c(2017,2018,2019),c('Name','Team')],
                      by = c('Name')) %>%
-  filter(Team == "Yankees") %>% distinct() %>% View()
+  filter(Team == "Giants") %>% distinct() %>% View()

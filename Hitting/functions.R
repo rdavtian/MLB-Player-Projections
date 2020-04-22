@@ -398,8 +398,8 @@ predict_future_years <- function(historical_data, future_data, y_var, x_vars, x_
                                  Season_Projected - Season_Current == 5 ~ max(errors[[5]]),
                                  Season_Projected - Season_Current == 6 ~ max(errors[[6]]))
     ) %>%
-    mutate(Stat_Projected_Upper = Stat_Projected + (2*abs(err_upper*err_multiplier)),
-           Stat_Projected_Lower = Stat_Projected - (2*abs(err_lower*err_multiplier)),
+    mutate(Stat_Projected_Upper = Stat_Projected + (1*abs(err_upper*err_multiplier)),
+           Stat_Projected_Lower = Stat_Projected - (1*abs(err_lower*err_multiplier)),
            Stat_Projected_Lower = ifelse(Stat_Projected_Lower < 0, 0, Stat_Projected_Lower)
     ) %>%
     select(-err_lower, -err_upper) %>%
