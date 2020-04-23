@@ -108,7 +108,8 @@ year_to_year_correlation <- function(pitching_data, metric)
   colnames(cor) <- c('Year 1-2','Year 2-3','Year 3-4','Year 4-5','Year 5-6',
                      'Year 6-7')#,'Year 7-8','Year 8-9')
   rownames(cor) <- 'r'
-  print(kable(round(cor,3), row.names = T))
+  print(round(cor, 3))
+  #print(kable(round(cor,3), row.names = T))
   
   year_x <- c(stat$Season1, stat$Season2, stat$Season3, stat$Season4, stat$Season5, 
               stat$Season6)#, stat$Season7, stat$Season8)
@@ -160,7 +161,6 @@ add_projected_prior_seasons <- function(hitters_data)
     inner_join(hitters_data[,c('Season','playerid')], by = c('Playerid' = 'playerid')) %>%
     rename(Season_Projected = 'Season', Age_Current = 'Age') %>%
     filter(Season_Projected > Season_Current) %>%
-    #filter(Name == 'Mike Trout') %>% 
     arrange(Name, Season_Current, Season_Projected) %>%
     group_by(Playerid) %>%
     mutate(MLB_Service_Projected = Season_Projected - min(Season_Current) + 1,
@@ -422,14 +422,12 @@ predict_future_years <- function(historical_data, future_data, y_var, x_vars, x_
                                  Season_Projected - Season_Current == 2 ~ min(errors[[2]]),
                                  Season_Projected - Season_Current == 3 ~ min(errors[[3]]),
                                  Season_Projected - Season_Current == 4 ~ min(errors[[4]]),
-                                 Season_Projected - Season_Current == 5 ~ min(errors[[5]]),
-                                 Season_Projected - Season_Current == 6 ~ min(errors[[6]])),
+                                 Season_Projected - Season_Current == 5 ~ min(errors[[5]])),
            err_upper = case_when(Season_Projected - Season_Current == 1 ~ max(errors[[1]]),
                                  Season_Projected - Season_Current == 2 ~ max(errors[[2]]),
                                  Season_Projected - Season_Current == 3 ~ max(errors[[3]]),
                                  Season_Projected - Season_Current == 4 ~ max(errors[[4]]),
-                                 Season_Projected - Season_Current == 5 ~ max(errors[[5]]),
-                                 Season_Projected - Season_Current == 6 ~ max(errors[[6]]))
+                                 Season_Projected - Season_Current == 5 ~ max(errors[[5]]))
            ) %>%
     mutate(Stat_Projected_Upper = Stat_Projected + (2*abs(err_upper*err_multiplier)),
            Stat_Projected_Lower = Stat_Projected - (2*abs(err_lower*err_multiplier)),
@@ -449,4 +447,183 @@ predict_future_years <- function(historical_data, future_data, y_var, x_vars, x_
     #select(-err) 
   filter(Season_Projected - Season_Current <= years_out)
   return(list(test, model))
+}
+
+projection_plot <- function(projection_data, player_name, stat, upper, lower)
+{
+  projection_data <- 
+    projection_data %>% filter(Name == player_name)
+  
+  stat <- rlang::sym(quo_name(enquo(stat)))
+  upper <- rlang::sym(quo_name(enquo(upper)))
+  lower <- rlang::sym(quo_name(enquo(lower)))
+  print(ggplot2::ggplot(data = projection_data, aes(x = Season_Projected, y = !! stat)) + 
+          geom_line(color = 'green', size = 2.3) + 
+          geom_line(aes(y = !! upper), color = "darkred", linetype = "twodash") + 
+          geom_line(aes(y = !! lower), color="darkred", linetype="twodash") + 
+          ggtitle(paste0(player_name, " Projected ", stat)) + xlab('Season'))
+}
+
+projection_comp_plot1 <- function(projection_data, player1, player2, stat, upper, lower)
+{
+  projection_data <- 
+    projection_data %>% filter(Name %in% c(player1, player2))
+  
+  stat <- rlang::sym(quo_name(enquo(stat)))
+  upper <- rlang::sym(quo_name(enquo(upper)))
+  lower <- rlang::sym(quo_name(enquo(lower)))
+  
+  ggplot2::ggplot(data = projection_data, aes(x = Season_Projected, y = !! stat, col = Name)) + 
+    geom_line(size = 2.3) + 
+    geom_line(aes(y = !! upper, col = Name), linetype = "twodash") + 
+    geom_line(aes(y = !! lower, col = Name), linetype="twodash") + 
+    ggtitle(paste0(player1," Vs ", player2, " Projected ", stat)) + xlab('Season')
+}
+
+projection_comp_plot2 <- function(projection_data, player1, player2, stat, upper, lower)
+{
+  projection_data <- 
+    projection_data %>% filter(Name %in% c(player1, player2))
+  
+  stat <- rlang::sym(quo_name(enquo(stat)))
+  upper <- rlang::sym(quo_name(enquo(upper)))
+  lower <- rlang::sym(quo_name(enquo(lower)))
+  
+  ggplot2::ggplot(data = projection_data, aes(x = Season_Projected, y = !! stat)) + 
+    geom_line(size = 2.3) + geom_line(aes(y = !! upper), colour = 'red', linetype = "twodash") + 
+    geom_line(aes(y = !! lower), colour = 'red', linetype = "twodash") + 
+    facet_grid( ~Name) + 
+    ggtitle(paste0(player1," Vs ", player2, " Projected ", stat)) + xlab('Season')
+}
+
+past_player_performance <- function(past_pitching_data, player_name, stat)
+{
+  past_pitching_data <- 
+    past_pitching_data %>% filter(Name == player_name)
+  
+  stat <- rlang::sym(quo_name(enquo(stat)))
+  
+  ggplot2::ggplot(data = past_pitching_data, aes(x = Season, y = !! stat)) + 
+    geom_line(col = 'darkgreen', size = 1.3) + geom_point(size = 3) + 
+    ggtitle(paste0(player_name, " ", stat)) + xlab('Season')
+}
+
+past_player_performance_comp1 <- function(past_pitching_data, player1, player2, stat)
+{
+  past_pitching_data <- 
+    past_pitching_data %>% filter(Name %in% c(player1, player2))
+  
+  stat <- rlang::sym(quo_name(enquo(stat)))
+  
+  ggplot2::ggplot(data = past_pitching_data, aes(x = Season, y = !! stat, col = Name)) + 
+    geom_line(size = 1.3) + geom_point(size = 3, col = 'black') + 
+    ggtitle(paste0(player1," Vs ", player2, " ", stat)) + xlab('Season')
+}
+
+past_player_performance_comp2 <- function(past_pitching_data, player1, player2, stat) 
+{
+  past_pitching_data <- 
+    past_pitching_data %>% filter(Name %in% c(player1, player2))
+  
+  stat <- rlang::sym(quo_name(enquo(stat)))
+  
+  ggplot2::ggplot(data = past_pitching_data, aes(x = Season, y = !! stat)) + 
+    geom_line(size = 1.3, col = 'red') + geom_point(size = 3, col = 'black') + 
+    facet_grid( ~Name) + 
+    ggtitle(paste0(player1," Vs ", player2, " ", stat)) + xlab('Season')
+}
+
+plot_past_future <- function(past_pitching, future_pitching, player_name, stat, lower, upper)
+{
+  future_pitching2 <- future_pitching %>%
+    rename(Season = 'Season_Projected',
+           playerid = 'Playerid') %>%
+    select(Name, Season, G, IP, ERA, FIP, xFIP, K., BB., playerid) 
+  
+  all <- past_pitching %>%
+    select(Name, Season, G, IP, ERA, FIP, xFIP, K., BB., playerid) %>%
+    bind_rows(future_pitching2) %>%
+    mutate(Time = case_when(Season <= current_season ~ 'past', 
+                            Season > current_season ~ 'future')) %>%
+    filter(Name == player_name) 
+  
+  all <- all %>% 
+    left_join(future_pitching[, c('Season_Projected','Playerid','G_Lower','G_Upper',
+                                 'IP_Lower','IP_Upper','ERA_Lower','ERA_Upper',
+                                 'FIP_Lower','FIP_Upper','xFIP_Lower','xFIP_Upper',
+                                 'K._Lower','K._Upper','BB._Lower','BB._Upper')], 
+              by = c('playerid' = 'Playerid', 'Season' = 'Season_Projected'))
+  
+  stat <- rlang::sym(quo_name(enquo(stat)))
+  upper <- rlang::sym(quo_name(enquo(upper)))
+  lower <- rlang::sym(quo_name(enquo(lower)))
+  
+  ggplot(all, aes(x = Season, y = !! stat, col = Time)) + geom_line(size = 1.3) + 
+    geom_point(size = 3) + xlab('Season') + 
+    geom_line(aes(y = !! lower), colour = 'red', linetype = "twodash") + 
+    geom_line(aes(y = !! upper), colour = 'red', linetype = "twodash") + 
+    ggtitle(paste0(player_name, " Past and Projected ", stat)) + 
+    scale_x_continuous(breaks = round(seq(min(all$Season), max(all$Season), by = 2)))
+}
+
+plot_past_future_comp <- function(past_pitching, future_pitching, player1, player2, stat, lower, upper)
+{
+  #if (grepl('.',stat))
+  #{
+  #stat2 <- str_replace(stat, ".$", "+")
+  #}
+  
+  future_pitching2 <- future_pitching %>%
+    rename(Season = 'Season_Projected',
+           playerid = 'Playerid') %>%
+    select(Name, Season, G, IP, ERA, FIP, xFIP, K., BB., playerid) 
+  
+  all <- past_pitching %>%
+    select(Name, Season, G, IP, ERA, FIP, xFIP, K., BB., playerid) %>%
+    bind_rows(future_pitching2) %>%
+    mutate(Time = case_when(Season <= current_season ~ 'past', 
+                            Season > current_season ~ 'future')) %>% 
+    left_join(future_pitching[, c('Season_Projected','Playerid','G_Lower','G_Upper',
+                                  'IP_Lower','IP_Upper','ERA_Lower','ERA_Upper',
+                                  'FIP_Lower','FIP_Upper','xFIP_Lower','xFIP_Upper',
+                                  'K._Lower','K._Upper','BB._Lower','BB._Upper')], 
+              by = c('playerid' = 'Playerid', 'Season' = 'Season_Projected'))
+  subset <- all %>% 
+    filter(Name %in%  c(player1, player2)) 
+  
+  stat <- rlang::sym(quo_name(enquo(stat)))
+  upper <- rlang::sym(quo_name(enquo(upper)))
+  lower <- rlang::sym(quo_name(enquo(lower)))
+  
+  print(ggplot(subset, aes(x = Season, y = !! stat, col = Time)) + geom_line(size = 1.3) + 
+          geom_point(size = 3) + facet_grid( ~Name) + 
+          geom_line(aes(y = !! lower), colour = 'red', linetype = "twodash") + 
+          geom_line(aes(y = !! upper), colour = 'red', linetype = "twodash") + 
+          ggtitle(paste0(player2," Vs ", player1, " Past & Projected ", stat)) + 
+          xlab('Season') + ylab(stat) + 
+          scale_x_continuous(breaks = round(seq(min(all$Season), max(all$Season), by = 2))))
+  return(all)
+}
+
+ranking_projected_players <- function(future_data, season_projected)
+{
+  ranks_2020 <- future_data %>%
+    filter(Season_Projected == season_projected) %>%
+    #mutate(K. = SO / PA,
+           #BB. = BB / PA) %>%
+    select(Name,Season_Projected,Pos_Group_Current,K.,BB.,ERA,FIP,xFIP) %>% 
+    arrange(Season_Projected, Name)
+  
+  names <- ranks_2020$Name
+  ranks_2020 <- ranks_2020[,4:ncol(ranks_2020)]
+  ranks <- data.frame(apply(-ranks_2020, 2, rank, ties.method='min'))
+  ranks$BB. = (nrow(ranks) + 1) - ranks$BB.
+  
+  ranks <- ranks %>% 
+    select(K.,BB.,ERA,FIP,xFIP) %>%
+    mutate(Mean_Rank = round(rowMeans(.),2))
+  ranks$Name <- names
+  ranks <- ranks %>%
+    select(Name,Mean_Rank,K.,BB.,ERA,FIP,xFIP)
+  return(ranks %>% arrange(Mean_Rank))
 }
