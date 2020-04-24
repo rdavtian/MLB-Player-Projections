@@ -538,10 +538,12 @@ plot_past_future <- function(past_pitching, future_pitching, player_name, stat, 
   future_pitching2 <- future_pitching %>%
     rename(Season = 'Season_Projected',
            playerid = 'Playerid') %>%
-    select(Name, Season, G, IP, ERA, FIP, xFIP, K., BB., playerid) 
+    select(Name, Season,G,GS,IP,ERA,FIP,xFIP,K.,BB.,BB,SO,K_Per9,BB_Per9,
+           BABIP,playerid) 
   
   all <- past_pitching %>%
-    select(Name, Season, G, IP, ERA, FIP, xFIP, K., BB., playerid) %>%
+    select(Name, Season,G,GS,IP,ERA,FIP,xFIP,K.,BB.,BB,SO,K_Per9,BB_Per9,
+           BABIP,playerid,H) %>%
     bind_rows(future_pitching2) %>%
     mutate(Time = case_when(Season <= current_season ~ 'past', 
                             Season > current_season ~ 'future')) %>%
@@ -551,7 +553,11 @@ plot_past_future <- function(past_pitching, future_pitching, player_name, stat, 
     left_join(future_pitching[, c('Season_Projected','Playerid','G_Lower','G_Upper',
                                  'IP_Lower','IP_Upper','ERA_Lower','ERA_Upper',
                                  'FIP_Lower','FIP_Upper','xFIP_Lower','xFIP_Upper',
-                                 'K._Lower','K._Upper','BB._Lower','BB._Upper')], 
+                                 'K._Lower','K._Upper','BB._Lower','BB._Upper',
+                                 'H_Lower','H_Upper','BABIP_Lower','BABIP_Upper',
+                                 'GS_Lower','GS_Upper','BB_Lower','BB_Upper',
+                                 'SO_Lower','SO_Upper','BB_Per9_Lower',
+                                 'BB_Per9_Upper','K_Per9_Lower','K_Per9_Upper')], 
               by = c('playerid' = 'Playerid', 'Season' = 'Season_Projected'))
   
   stat <- rlang::sym(quo_name(enquo(stat)))
@@ -576,17 +582,23 @@ plot_past_future_comp <- function(past_pitching, future_pitching, player1, playe
   future_pitching2 <- future_pitching %>%
     rename(Season = 'Season_Projected',
            playerid = 'Playerid') %>%
-    select(Name, Season, G, IP, ERA, FIP, xFIP, K., BB., playerid) 
+    select(Name, Season,G,GS,IP,ERA,FIP,xFIP,K.,BB.,BB,SO,K_Per9,BB_Per9,
+           BABIP,H,playerid) 
   
   all <- past_pitching %>%
-    select(Name, Season, G, IP, ERA, FIP, xFIP, K., BB., playerid) %>%
+    select(Name, Season,G,GS,IP,ERA,FIP,xFIP,K.,BB.,BB,SO,K_Per9,BB_Per9,
+           BABIP,H,playerid) %>%
     bind_rows(future_pitching2) %>%
     mutate(Time = case_when(Season <= current_season ~ 'past', 
                             Season > current_season ~ 'future')) %>% 
     left_join(future_pitching[, c('Season_Projected','Playerid','G_Lower','G_Upper',
                                   'IP_Lower','IP_Upper','ERA_Lower','ERA_Upper',
                                   'FIP_Lower','FIP_Upper','xFIP_Lower','xFIP_Upper',
-                                  'K._Lower','K._Upper','BB._Lower','BB._Upper')], 
+                                  'K._Lower','K._Upper','BB._Lower','BB._Upper',
+                                  'H_Lower','H_Upper','BABIP_Lower','BABIP_Upper',
+                                  'GS_Lower','GS_Upper','BB_Lower','BB_Upper',
+                                  'SO_Lower','SO_Upper','BB_Per9_Lower',
+                                  'BB_Per9_Upper','K_Per9_Lower','K_Per9_Upper')], 
               by = c('playerid' = 'Playerid', 'Season' = 'Season_Projected'))
   subset <- all %>% 
     filter(Name %in%  c(player1, player2)) 
@@ -609,21 +621,25 @@ ranking_projected_players <- function(future_data, season_projected)
 {
   ranks_2020 <- future_data %>%
     filter(Season_Projected == season_projected) %>%
-    #mutate(K. = SO / PA,
-           #BB. = BB / PA) %>%
-    select(Name,Season_Projected,Pos_Group_Current,K.,BB.,ERA,FIP,xFIP) %>% 
+    select(Name,Season_Projected,Pos_Group_Current,K_Per9,BB_Per9,K.,BB.,
+           ERA,FIP,xFIP,BABIP,IP) %>% 
     arrange(Season_Projected, Name)
   
   names <- ranks_2020$Name
   ranks_2020 <- ranks_2020[,4:ncol(ranks_2020)]
   ranks <- data.frame(apply(-ranks_2020, 2, rank, ties.method='min'))
   ranks$BB. = (nrow(ranks) + 1) - ranks$BB.
+  ranks$BB_Per9 = (nrow(ranks) + 1) - ranks$BB_Per9
+  ranks$ERA = (nrow(ranks) + 1) - ranks$ERA
+  ranks$FIP = (nrow(ranks) + 1) - ranks$FIP
+  ranks$xFIP = (nrow(ranks) + 1) - ranks$xFIP
+  ranks$BABIP = (nrow(ranks) + 1) - ranks$BABIP
   
   ranks <- ranks %>% 
-    select(K.,BB.,ERA,FIP,xFIP) %>%
+    select(K_Per9,BB_Per9,K.,BB.,ERA,FIP,xFIP,BABIP,IP) %>%
     mutate(Mean_Rank = round(rowMeans(.),2))
   ranks$Name <- names
   ranks <- ranks %>%
-    select(Name,Mean_Rank,K.,BB.,ERA,FIP,xFIP)
+    select(Name,Mean_Rank,K_Per9,BB_Per9,K.,BB.,ERA,FIP,xFIP,BABIP,IP)
   return(ranks %>% arrange(Mean_Rank))
 }
