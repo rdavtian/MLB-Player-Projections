@@ -21,13 +21,28 @@ options(scipen = 999)
 #####################################################################################
 # Data Reading, Cleaning, Manipulating
 offense <- read.csv('fangraphs_hitting.csv', header = T, fileEncoding="UTF-8-BOM")
-hitters <- read.csv('player_age_seasons.csv', header = T, fileEncoding="UTF-8-BOM")[, c('Season','Name','Age','playerid')]
+offense <- offense %>% 
+  arrange(Name, Season) %>%
+  group_by(playerid) %>%
+  mutate(Team = na_if(Team, "- - -")) %>%
+  tidyr::fill(Team, .direction = 'updown') %>% ungroup()
+
+hitters <- read.csv('player_age_seasons.csv', header = T, fileEncoding="UTF-8-BOM")[, c('Season','Name','Team','Age','playerid')]
+hitters <- hitters %>% 
+  arrange(Name, Season) %>%
+  group_by(playerid) %>%
+  mutate(Team = na_if(Team, "- - -")) %>%
+  tidyr::fill(Team, .direction = 'updown') %>% ungroup()
+
 positions <- read.csv('positions.csv', header = T, fileEncoding="UTF-8-BOM")[, c('Season','Name','Pos','Inn','playerid')]
 salaries <- loadWorkbook('salaries.xlsx')
 cpi <- read.csv('CPI.csv', header = T, fileEncoding="UTF-8-BOM")
 offense$Name <- as.character(offense$Name)
 hitters$Name <- as.character(hitters$Name)
 positions$Name <- as.character(positions$Name)
+offense$Team <- as.character(offense$Team)
+hitters$Team <- as.character(hitters$Team)
+
 positions <- sqldf("SELECT Season, Name, playerid, Pos, MAX(Inn) AS Inn
                     FROM positions GROUP BY playerid, Season")
 offense <- offense %>%
@@ -76,7 +91,7 @@ salaries <- salaries %>%
 
 hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
-hitters2 <- merge_hitting_stats(hitters2, c('PA','AVG','FB.','SwStr.','Swing.','Contact.',
+hitters2 <- merge_hitting_stats(hitters2, c('PA','AVG','SwStr.','Swing.','Contact.',
                                             'Zone.','F.Strike.','O.Contact.','Z.Contact.',
                                             'Z.Swing.','O.Swing.','FB.','LD.','GB.','Pull.',
                                             'Oppo.','Cent.','Hard.','Med.','Soft.','Spd',
@@ -185,7 +200,7 @@ model <- z[[2]]
 #coef(model$finalModel, model$bestTune$lambda)
 
 future_preds <- z[[1]] %>% 
-  select(Name, Season_Projected, Age_Projected, Playerid, Pos_Group_Current, Stat_Projected, 
+  select(Name, Team, Season_Projected, Age_Projected, Playerid, Pos_Group_Current, Stat_Projected, 
          Stat_Projected_Upper, Stat_Projected_Lower) %>%
   rename(PA = 'Stat_Projected', PA_Upper = 'Stat_Projected_Upper', 
          PA_Lower = 'Stat_Projected_Lower')

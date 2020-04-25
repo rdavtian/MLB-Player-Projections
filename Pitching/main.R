@@ -21,13 +21,31 @@ options(scipen = 999)
 #####################################################################################
 # Data Reading, Cleaning, Manipulating
 pitching <- read.csv('fangraphs_pitching.csv', header = T, fileEncoding="UTF-8-BOM")
-pitchers <- read.csv('player_age_seasons.csv', header = T, fileEncoding="UTF-8-BOM")[, c('Season','Name','Age','playerid')]
+pitching <- pitching %>% 
+  arrange(Name, Season) %>%
+  group_by(playerid) %>%
+  mutate(Team = na_if(Team, "- - -")) %>%
+  tidyr::fill(Team, .direction = 'updown') %>% ungroup()
+
+pitchers <- read.csv('player_age_seasons.csv', header = T, fileEncoding="UTF-8-BOM")[, c('Season','Name','Team','Age','playerid')]
+pitchers <- pitchers %>% 
+  arrange(Name, Season) %>%
+  group_by(playerid) %>%
+  mutate(Team = na_if(Team, "- - -")) %>%
+  tidyr::fill(Team, .direction = 'updown') %>% ungroup()
+
 salaries <- loadWorkbook('salaries.xlsx')
 cpi <- read.csv('CPI.csv', header = T, fileEncoding="UTF-8-BOM")
+park_factor <- read.csv('park_factors.csv', header = T, fileEncoding="UTF-8-BOM")
 pitching$Name <- as.character(pitching$Name)
 pitchers$Name <- as.character(pitchers$Name)
+pitching$Team <- as.character(pitching$Team)
+pitchers$Team <- as.character(pitchers$Team)
+park_factor$Team <- as.character(park_factor$Team)
 
 pitching <- pitching %>%
+  left_join(park_factor, by = 'Team') %>%
+  mutate(League = as.character(League)) %>%
   mutate(Start.IP = case_when(IP - Relief.IP == 0 ~ 0,
                               TRUE ~ Start.IP),
          Relief.IP = case_when(IP - Start.IP == 0 ~ 0,
@@ -48,7 +66,15 @@ pitching <- pitching %>%
          BIP_PerIP = BIP / IP,
          H_PerIP = H / IP,
          BB_PerIP = BB / IP,
-         HBP_PerIP = HBP / IP)
+         HBP_PerIP = HBP / IP) %>% 
+  group_by(Season, League) %>%
+  mutate(League_ERA = mean(ERA, na.rm = T),
+         League_FIP = mean(FIP, na.rm = T),
+         League_xFIP = mean(xFIP, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(ERA_minus = (ERA + (ERA - (ERA * ESPN_PF))) / (League_ERA) * 100,
+         FIP_minus = (FIP + (FIP - (FIP * ESPN_PF))) / (League_FIP) * 100,
+         xFIP_minus = (xFIP + (xFIP - (xFIP * ESPN_PF))) / (League_xFIP) * 100)
 
 sheetNames <- sheets(salaries)
 for(i in 1:length(sheetNames))
@@ -175,12 +201,10 @@ model <- z[[2]]
 #coef(model$finalModel, model$bestTune$lambda)
 
 future_preds <- z[[1]] %>% 
-  select(Name, Season_Projected, Age_Projected, Playerid, Pos_Group_Current, Stat_Projected, 
+  select(Name, Team, Season_Projected, Age_Projected, Playerid, Pos_Group_Current, Stat_Projected, 
          Stat_Projected_Upper, Stat_Projected_Lower) %>%
   rename(G = 'Stat_Projected', G_Upper = 'Stat_Projected_Upper', 
-         G_Lower = 'Stat_Projected_Lower') #%>%
-  #mutate(G_Upper = case_when(Pos_Group_Current == 'SP' & G_Upper >= 33 ~ 33,
-                             #TRUE ~ G_Upper))
+         G_Lower = 'Stat_Projected_Lower')
 ####################################################################################
 # Projecting GS
 pitchers <- add_projection_years(pitchers, 11)
@@ -316,7 +340,11 @@ Start.IP_PerGS <- z[[1]] %>%
   select(Season_Projected, Playerid, Stat_Projected,
          Stat_Projected_Upper, Stat_Projected_Lower) %>%
   rename(Start.IP_PerGS = 'Stat_Projected', Start.IP_PerGS_Upper = 'Stat_Projected_Upper',
-         Start.IP_PerGS_Lower = 'Stat_Projected_Lower')
+         Start.IP_PerGS_Lower = 'Stat_Projected_Lower') %>%
+  mutate(Start.IP_PerGS = case_when(Start.IP_PerGS < 0 ~ 0, 
+                                    TRUE ~ Start.IP_PerGS),
+         Start.IP_PerGS_Upper = case_when(Start.IP_PerGS_Upper < 0 ~ 0, 
+                                    TRUE ~ Start.IP_PerGS_Upper))
 
 future_preds <- future_preds %>%
   inner_join(Start.IP_PerGS, by = c('Playerid','Season_Projected')) %>%
@@ -494,9 +522,9 @@ future_preds <- future_preds %>%
   mutate(HBP = HBP_PerIP * IP, 
          HBP_Upper = HBP_PerIP_Upper * IP_Upper,
          HBP_Lower = HBP_PerIP_Lower * IP_Lower) %>%
-  mutate(TBF = IP*2.9 - H - BB - HBP,
-         TBF_Lower = IP_Lower*2.9 - H_Lower - BB_Lower - HBP_Lower,
-         TBF_Upper = IP_Upper*2.9 - H_Upper - BB_Upper - HBP_Upper)
+  mutate(TBF = IP*2.9 + H + BB + HBP,
+         TBF_Lower = IP_Lower*2.9 + H_Lower + BB_Lower + HBP_Lower,
+         TBF_Upper = IP_Upper*2.9 + H_Upper + BB_Upper + HBP_Upper)
 #######################################################################
 # Projecting BABIP
 pitchers <- add_projection_years(pitchers, 11)
@@ -1000,7 +1028,30 @@ xFIP <- z[[1]] %>%
          xFIP_Lower = 'Stat_Projected_Lower')
 
 future_preds <- future_preds %>% 
-  inner_join(xFIP, by = c('Playerid','Season_Projected'))
+  inner_join(xFIP, by = c('Playerid','Season_Projected')) %>%
+  mutate(WHIP = (BB + H) / IP,
+         WHIP_Lower = (BB_Lower + H_Lower) / IP_Lower,
+         WHIP_Upper = (BB_Upper + H_Upper) / IP_Upper)
+
+future_preds <- future_preds %>% 
+  inner_join(park_factor, by = 'Team') %>%
+  mutate(League = as.character(League)) %>%
+  group_by(Season_Projected, League) %>%
+  mutate(League_ERA = mean(ERA, na.rm = T),
+         League_FIP = mean(FIP, na.rm = T),
+         League_xFIP = mean(xFIP, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(ERA_minus = (ERA + (ERA - (ERA * ESPN_PF))) / (League_ERA) * 100,
+         ERA_minus_Lower = (ERA_Lower + (ERA_Lower - (ERA_Lower * ESPN_PF))) / (League_ERA) * 100,
+         ERA_minus_Upper = (ERA_Upper + (ERA_Upper - (ERA_Upper * ESPN_PF))) / (League_ERA) * 100,
+         FIP_minus = (FIP + (FIP - (FIP * ESPN_PF))) / (League_FIP) * 100,
+         FIP_minus_Lower = (FIP_Lower + (FIP_Lower - (FIP_Lower * ESPN_PF))) / (League_FIP) * 100,
+         FIP_minus_Upper = (FIP_Upper + (FIP_Upper - (FIP_Upper * ESPN_PF))) / (League_FIP) * 100,
+         xFIP_minus = (xFIP + (xFIP - (xFIP * ESPN_PF))) / (League_xFIP) * 100,
+         xFIP_minus_Lower = (xFIP_Lower + (xFIP_Lower - (xFIP_Lower * ESPN_PF))) / (League_xFIP) * 100,
+         xFIP_minus_Upper = (xFIP_Upper + (xFIP_Upper - (xFIP_Upper * ESPN_PF))) / (League_xFIP) * 100
+         )
+
 ##############################################################################
 # View forecasts
 setwd('C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Pitching/Player_Comparisons/Player_Metrics_Forecasts')
@@ -1008,7 +1059,8 @@ pred_year <- 2020
 preds <- future_preds %>% 
   filter(Season_Projected == pred_year) %>%
   select(Name,Season_Projected,Pos_Group_Current,G,GS,IP,ERA,FIP,xFIP,
-         BABIP,H,BB,SO,BB.,K.,BB_Per9,K_Per9) %>% 
+         BABIP,H,BB,SO,BB.,K.,BB_Per9,K_Per9,WHIP,ERA_minus,FIP_minus,
+         xFIP_minus) %>% 
   arrange(Season_Projected, Name) %>%
   mutate_if(is.numeric, round, 3) %>%
   #mutate(PA = as.integer(PA), AB = as.integer(AB), 
@@ -1061,10 +1113,9 @@ projection_comp_plot2(future_preds,'Madison Bumgarner','Clayton Kershaw','BABIP'
 past_player_performance(pitching, 'Madison Bumgarner', 'H')
 past_player_performance_comp1(pitching, 'Madison Bumgarner','Clayton Kershaw','FIP')
 
-plot_past_future(pitching, future_preds, 'Clayton Kershaw', 'xFIP','xFIP_Lower','xFIP_Upper')
-
-plot_past_future_comp(pitching, future_preds, 'Clayton Kershaw','Madison Bumgarner',
-                      'K_Per9','K_Per9_Lower','K_Per9_Upper')
+plot_past_future(pitching, future_preds, 'Clayton Kershaw', 'ERA_minus','xFIP_Lower','xFIP_Upper')
+plot_past_future_comp(pitching, future_preds, 'Madison Bumgarner','Clayton Kershaw',
+                      'IP','IP_Lower','IP_Upper')
 #############################################################################
 # Which players are projected higher, lower for next season
 current_season = 2019
@@ -1074,7 +1125,7 @@ all <- all %>% filter(Season >= current_season, Season <= current_season + 1)
 list_of_names <- unique(all$Name)
 list <- list()
 i = 1
-stat = 'ERA'
+stat = 'ERA_minus'
 for (name in list_of_names)
 {
   old_value <- all %>% 

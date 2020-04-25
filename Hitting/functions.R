@@ -134,6 +134,7 @@ add_projection_years <- function(hitters_data, forecast_year)
     season <- max(hitters_data$Season[hitters_data$Name == name])
     age <- max(hitters_data$Age[hitters_data$Name == name])
     playerid <- hitters_data$playerid[hitters_data$Name == name][1]
+    team <- max(hitters_data$Team[(hitters_data$playerid == playerid) & (hitters_data$Season == season)])
     if (season >= current_season - 1)
     {
       while (season < current_season + forecast_year)
@@ -141,7 +142,7 @@ add_projection_years <- function(hitters_data, forecast_year)
         season <- season + 1
         age <- age + 1
         hitters_data <- hitters_data %>% 
-          add_row(Name = name, Season = season, Age = age, playerid = playerid)
+          add_row(Name = name, Team = team, Season = season, Age = age, playerid = playerid)
       }
     }
   }
@@ -162,7 +163,6 @@ add_projected_prior_seasons <- function(hitters_data)
     inner_join(hitters_data[,c('Season','playerid')], by = c('Playerid' = 'playerid')) %>%
     rename(Season_Projected = 'Season', Age_Current = 'Age') %>%
     filter(Season_Projected > Season_Current) %>%
-    #filter(Name == 'Mike Trout') %>% 
     arrange(Name, Season_Current, Season_Projected) %>%
     group_by(Playerid) %>%
     mutate(MLB_Service_Projected = Season_Projected - min(Season_Current) + 1,
@@ -234,7 +234,7 @@ train_models <- function(historical_data, y_var, x_vars, x_vars2, model_type, tu
 {
   historical_years_out <- historical_data %>% 
     filter(Season_Projected - Season_Current == years_out) %>%
-    select(Name, Season_Current, Season_Projected, y_var, x_vars2)
+    select(Name, Team, Season_Current, Season_Projected, y_var, x_vars2)
   historical_years_out <- tidyr::drop_na(historical_years_out)
   
   set.seed(43)
@@ -334,7 +334,7 @@ predict_future_years <- function(historical_data, future_data, y_var, x_vars, x_
   train <- tidyr::drop_na(train)
   
   test <- future_data %>% 
-    select(Name, Season_Current, Season_Projected, x_vars2[-length(x_vars2)], Playerid)
+    select(Name, Team, Season_Current, Season_Projected, x_vars2[-length(x_vars2)], Playerid)
   test <- tidyr::drop_na(test)
   
   model <- caret::train(as.formula(paste0(y_var, " ~ ", paste0(x_vars[-length(x_vars)], collapse = " + "))), 
