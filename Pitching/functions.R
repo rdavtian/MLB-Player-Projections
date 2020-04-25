@@ -126,39 +126,40 @@ year_to_year_correlation <- function(pitching_data, metric)
 }
 
 # add future projection years for players that have played since 2018
-add_projection_years <- function(hitters_data, forecast_year) 
+add_projection_years <- function(pitchers_data, forecast_year) 
 {
-  for (name in unique(hitters_data$Name)) 
+  for (name in unique(pitchers_data$Name)) 
   { 
-    season <- max(hitters_data$Season[hitters_data$Name == name])
-    age <- max(hitters_data$Age[hitters_data$Name == name])
-    playerid <- hitters_data$playerid[hitters_data$Name == name][1]
+    season <- max(pitchers_data$Season[pitchers_data$Name == name])
+    age <- max(pitchers_data$Age[pitchers_data$Name == name])
+    playerid <- pitchers_data$playerid[pitchers_data$Name == name][1]
+    team <- max(pitchers_data$Team[(pitchers_data$playerid == playerid) & (pitchers_data$Season == season)])
     if (season >= current_season - 1)
     {
       while (season < current_season + forecast_year)
       {
         season <- season + 1
         age <- age + 1
-        hitters_data <- hitters_data %>% 
-          add_row(Name = name, Season = season, Age = age, playerid = playerid)
+        pitchers_data <- pitchers_data %>% 
+          add_row(Name = name, Team = team, Season = season, Age = age, playerid = playerid)
       }
     }
   }
-  hitters_data <- hitters_data %>% 
+  pitchers_data <- pitchers_data %>% 
     group_by(playerid) %>% arrange(Name, Season) %>%
     mutate(MLB_Service_Current = seq(n()))
-  return(hitters_data)
+  return(pitchers_data)
 }
 
 # Function that adds lagged seasons (2)
 # Filters out any hitter aged 43 or older
 # Adds cumulative mlb service in years
-add_projected_prior_seasons <- function(hitters_data)
+add_projected_prior_seasons <- function(pitchers_data)
 {
-  hitters_data <- hitters_data %>% ungroup() %>%
+  pitchers_data <- pitchers_data %>% ungroup() %>%
     filter(Age <= 42) %>% distinct() %>%
     rename(Season_Current = 'Season', Playerid = 'playerid') %>%
-    inner_join(hitters_data[,c('Season','playerid')], by = c('Playerid' = 'playerid')) %>%
+    inner_join(pitchers_data[,c('Season','playerid')], by = c('Playerid' = 'playerid')) %>%
     rename(Season_Projected = 'Season', Age_Current = 'Age') %>%
     filter(Season_Projected > Season_Current) %>%
     arrange(Name, Season_Current, Season_Projected) %>%
@@ -168,51 +169,8 @@ add_projected_prior_seasons <- function(hitters_data)
     ungroup() %>% 
     mutate(Season_Prior = Season_Current - 1,
            Season_Prior_2 = Season_Current - 2)
-  return(hitters_data)
+  return(pitchers_data)
 }  
-
-# Merge FanGraphs hitting stats to projected, current, prior, 2 prior, and 3 prior seasons
-# Add position and create position groups for current season, extropolate position groups
-# for all current seasons
-merge_hitting_stats <- function(hitters_data, offensive_stats)
-{
-  hitters_data <- hitters_data %>% 
-    left_join(positions[,c('Season','playerid','Pos')], 
-              by = c('Season_Current'='Season','Playerid'='playerid')) %>%
-    mutate(Pos_Group_Current = case_when(Pos %in% c('LF','CF','RF') ~ 'OF',
-                                         Pos %in% c('1B','3B') ~ 'CornerIF',
-                                         Pos %in% c('2B','SS') ~ 'MiddleIF',
-                                         Pos %in% c('C') ~ 'C',
-                                         Pos %in% c('P') ~ 'P')) %>% select(-Pos) %>% 
-    tidyr::fill(Pos_Group_Current, .direction = 'downup')
-  
-  stats <- hitters_data %>% 
-    left_join(offense[,c('Season','Name',offensive_stats)], by = c('Season_Current' = 'Season','Name'))
-  colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)] <- 
-    paste0(colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)],"_Current")
-  
-  stats <- stats %>%
-    left_join(offense[,c('Season','Name',offensive_stats)], by = c('Season_Prior' = 'Season','Name'))
-  colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)] <- 
-    paste0(colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)],"_Prior")
-  
-  stats <- stats %>%
-    left_join(offense[,c('Season','Name',offensive_stats)], by = c('Season_Prior_2' = 'Season','Name'))
-  colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)] <- 
-    paste0(colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)],"_Prior_2")
-  
-  #stats <- stats %>%
-  #left_join(offense[,c('Season','Name',offensive_stats)], by = c('Season_Prior_3' = 'Season','Name'))
-  #colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)] <- 
-  #paste0(colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)],"_Prior_3")
-  
-  stats <- stats %>%
-    left_join(offense[,c('Season','Name',offensive_stats)], by = c('Season_Projected' = 'Season','Name'))
-  colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)] <- 
-    paste0(colnames(stats)[(ncol(stats) - length(offensive_stats) + 1):ncol(stats)],"_Projected")
-  
-  return(stats)
-}
 
 merge_pitching_stats <- function(pitchers_data, pitching_stats)
 {
@@ -232,7 +190,7 @@ merge_pitching_stats <- function(pitchers_data, pitching_stats)
     paste0(colnames(stats)[(ncol(stats) - length(pitching_stats) + 1):ncol(stats)],"_Prior_2")
   
   #stats <- stats %>%
-  #left_join(pitching[,c('Season','Name',pitching_stats)], by = c('Season_Prior_3' = 'Season','Name'))
+  #left_join(pitching[,c('Season','Name',pitching_stats)], by = c('Season_Prior_3' = 'Season','Name','Team))
   #colnames(stats)[(ncol(stats) - length(pitching_stats) + 1):ncol(stats)] <- 
   #paste0(colnames(stats)[(ncol(stats) - length(pitching_stats) + 1):ncol(stats)],"_Prior_3")
   
@@ -243,8 +201,10 @@ merge_pitching_stats <- function(pitchers_data, pitching_stats)
   
   stats <- stats %>%
     tidyr::fill(Pos_Group_Current, .direction = 'downup') %>%
-    select(-Pos_Group_Prior, -Pos_Group_Prior_2) %>%
+    select(-Pos_Group_Prior,-Pos_Group_Prior_2) %>%
+    #tidyr::fill(Team_Current, .direction = 'downup') %>%
     mutate(Pos_Group_Projected = dplyr::coalesce(Pos_Group_Current, Pos_Group_Projected))
+    #mutate(Team_Projected = dplyr::coalesce(Team_Current, Team_Projected))
   
   return(stats)
 }
@@ -265,9 +225,9 @@ historical_future_split <- function(pitchers_data, recent)
 # Given y_var and set of explanatory vars
 train_models <- function(historical_data, y_var, x_vars, x_vars2, model_type, tuneLength, years_out)
 {
-  historical_years_out <- historical_data %>% 
+  historical_years_out <- historical %>% 
     filter(Season_Projected - Season_Current == years_out) %>%
-    select(Name, Season_Current, Season_Projected, y_var, x_vars2)
+    select(Name, Team, Season_Current, Season_Projected, y_var, x_vars2)
   historical_years_out <- tidyr::drop_na(historical_years_out)
   
   set.seed(43)
@@ -357,19 +317,20 @@ predict_future_years <- function(historical_data, future_data, y_var, x_vars, x_
                                  model_type, tuneLength, years_out, errors, err_multiplier)
 {
   for (i in 1:length(errors))
-  { # 0.9, 0.1
-    keep <- errors[[i]] <= quantile(errors[[i]], c(0.75)) & errors[[i]] >= quantile(errors[[i]], c(0.25))
+  { # 0.75, 0.25
+    keep <- errors[[i]] <= quantile(errors[[i]], c(0.9)) & errors[[i]] >= quantile(errors[[i]], c(0.1))
     errors[[i]] <- errors[[i]][keep]
     
   }
+
   train <- historical_data %>%
     select(Name, Season_Current, Season_Projected, y_var, x_vars2, Playerid)
   train <- tidyr::drop_na(train)
   
   test <- future_data %>% 
-    select(Name, Season_Current, Season_Projected, x_vars2[-length(x_vars2)], Playerid)
+    select(Name, Team, Season_Current, Season_Projected, x_vars2[-length(x_vars2)], Playerid)
   test <- tidyr::drop_na(test)
-  
+
   model <- caret::train(as.formula(paste0(y_var, " ~ ", paste0(x_vars[-length(x_vars)], collapse = " + "))), 
                         method = model_type, metric = 'MAE', data = train,
                         #tuneGrid = parametersGrid,
@@ -413,38 +374,35 @@ predict_future_years <- function(historical_data, future_data, y_var, x_vars, x_
     coefs_data <- as.data.frame(NA)
   }
   
-  #plot(model)
-  #summary(model)
   model_preds <- predict(model, test, interval = "confidence")
   test$Stat_Projected <- model_preds * err_multiplier
   test <- test %>%
-    mutate(err_lower = case_when(Season_Projected - Season_Current == 1 ~ min(errors[[1]]),
-                                 Season_Projected - Season_Current == 2 ~ min(errors[[2]]),
-                                 Season_Projected - Season_Current == 3 ~ min(errors[[3]]),
-                                 Season_Projected - Season_Current == 4 ~ min(errors[[4]]),
-                                 Season_Projected - Season_Current == 5 ~ min(errors[[5]])),
-           err_upper = case_when(Season_Projected - Season_Current == 1 ~ max(errors[[1]]),
-                                 Season_Projected - Season_Current == 2 ~ max(errors[[2]]),
-                                 Season_Projected - Season_Current == 3 ~ max(errors[[3]]),
-                                 Season_Projected - Season_Current == 4 ~ max(errors[[4]]),
-                                 Season_Projected - Season_Current == 5 ~ max(errors[[5]]))
-           ) %>%
-    mutate(Stat_Projected_Upper = Stat_Projected + (2*abs(err_upper*err_multiplier)),
-           Stat_Projected_Lower = Stat_Projected - (2*abs(err_lower*err_multiplier)),
-           Stat_Projected_Lower = ifelse(Stat_Projected_Lower < 0, 0, Stat_Projected_Lower)
-           ) %>%
-    select(-err_lower, -err_upper) %>%
-    #mutate(err = case_when(Season_Projected - Season_Current == 1 ~ mean(sample(errors[[1]], 200, replace = F)),
-                           #Season_Projected - Season_Current == 2 ~ mean(sample(errors[[2]], 200, replace = F)),
-                           #Season_Projected - Season_Current == 3 ~ mean(sample(errors[[3]], 200, replace = T)),
-                           #Season_Projected - Season_Current == 4 ~ mean(sample(errors[[4]], 200, replace = T)),
-                           #Season_Projected - Season_Current == 5 ~ mean(sample(errors[[5]], 200, replace = T)),
-                           #Season_Projected - Season_Current == 6 ~ mean(sample(errors[[6]], 200, replace = T)))) %>%
-    #mutate(Stat_Projected_Upper = Stat_Projected + (2*abs(err*err_multiplier)),
-           #Stat_Projected_Lower = Stat_Projected - (2*abs(err*err_multiplier)),
+    #mutate(err_lower = case_when(Season_Projected - Season_Current == 1 ~ min(errors[[1]]),
+                                 #Season_Projected - Season_Current == 2 ~ min(errors[[2]]),
+                                 #Season_Projected - Season_Current == 3 ~ min(errors[[3]]),
+                                 #Season_Projected - Season_Current == 4 ~ min(errors[[4]]),
+                                 #Season_Projected - Season_Current == 5 ~ min(errors[[5]])),
+           #err_upper = case_when(Season_Projected - Season_Current == 1 ~ max(errors[[1]]),
+                                 #Season_Projected - Season_Current == 2 ~ max(errors[[2]]),
+                                 #Season_Projected - Season_Current == 3 ~ max(errors[[3]]),
+                                 #Season_Projected - Season_Current == 4 ~ max(errors[[4]]),
+                                 #Season_Projected - Season_Current == 5 ~ max(errors[[5]]))
+           #) %>%
+    #mutate(Stat_Projected_Upper = Stat_Projected + (1*abs(err_upper*err_multiplier)),
+           #Stat_Projected_Lower = Stat_Projected - (1*abs(err_lower*err_multiplier)),
            #Stat_Projected_Lower = ifelse(Stat_Projected_Lower < 0, 0, Stat_Projected_Lower)
-    #) %>%
-    #select(-err) 
+           #) %>%
+    #select(-err_lower, -err_upper) %>%
+    mutate(err = case_when(Season_Projected - Season_Current == 1 ~ mean(sample(errors[[1]], 200, replace = F)),
+                           Season_Projected - Season_Current == 2 ~ mean(sample(errors[[2]], 200, replace = F)),
+                           Season_Projected - Season_Current == 3 ~ mean(sample(errors[[3]], 200, replace = T)),
+                           Season_Projected - Season_Current == 4 ~ mean(sample(errors[[4]], 200, replace = T)),
+                           Season_Projected - Season_Current == 5 ~ mean(sample(errors[[5]], 200, replace = T)))) %>%
+    mutate(Stat_Projected_Upper = Stat_Projected + (2*abs(err*err_multiplier)),
+           Stat_Projected_Lower = Stat_Projected - (2*abs(err*err_multiplier)),
+           Stat_Projected_Lower = ifelse(Stat_Projected_Lower < 0, 0, Stat_Projected_Lower)
+    ) %>%
+    select(-err) %>%
   filter(Season_Projected - Season_Current <= years_out)
   return(list(test, model))
 }
@@ -539,11 +497,11 @@ plot_past_future <- function(past_pitching, future_pitching, player_name, stat, 
     rename(Season = 'Season_Projected',
            playerid = 'Playerid') %>%
     select(Name, Season,G,GS,IP,ERA,FIP,xFIP,K.,BB.,BB,SO,K_Per9,BB_Per9,
-           BABIP,playerid) 
+           BABIP,WHIP,ERA_minus,FIP_minus,xFIP_minus,playerid) 
   
   all <- past_pitching %>%
     select(Name, Season,G,GS,IP,ERA,FIP,xFIP,K.,BB.,BB,SO,K_Per9,BB_Per9,
-           BABIP,playerid,H) %>%
+           BABIP,playerid,H,WHIP,ERA_minus,FIP_minus,xFIP_minus) %>%
     bind_rows(future_pitching2) %>%
     mutate(Time = case_when(Season <= current_season ~ 'past', 
                             Season > current_season ~ 'future')) %>%
@@ -557,7 +515,11 @@ plot_past_future <- function(past_pitching, future_pitching, player_name, stat, 
                                  'H_Lower','H_Upper','BABIP_Lower','BABIP_Upper',
                                  'GS_Lower','GS_Upper','BB_Lower','BB_Upper',
                                  'SO_Lower','SO_Upper','BB_Per9_Lower',
-                                 'BB_Per9_Upper','K_Per9_Lower','K_Per9_Upper')], 
+                                 'BB_Per9_Upper','K_Per9_Lower','K_Per9_Upper',
+                                 'WHIP_Lower','WHIP_Upper','ERA_minus_Lower',
+                                 'ERA_minus_Upper','FIP_minus_Lower',
+                                 'FIP_minus_Upper','xFIP_minus_Lower',
+                                 'xFIP_minus_Upper')], 
               by = c('playerid' = 'Playerid', 'Season' = 'Season_Projected'))
   
   stat <- rlang::sym(quo_name(enquo(stat)))
@@ -583,11 +545,11 @@ plot_past_future_comp <- function(past_pitching, future_pitching, player1, playe
     rename(Season = 'Season_Projected',
            playerid = 'Playerid') %>%
     select(Name, Season,G,GS,IP,ERA,FIP,xFIP,K.,BB.,BB,SO,K_Per9,BB_Per9,
-           BABIP,H,playerid) 
+           BABIP,H,WHIP,ERA_minus,FIP_minus,xFIP_minus,playerid) 
   
   all <- past_pitching %>%
     select(Name, Season,G,GS,IP,ERA,FIP,xFIP,K.,BB.,BB,SO,K_Per9,BB_Per9,
-           BABIP,H,playerid) %>%
+           BABIP,H,WHIP,ERA_minus,FIP_minus,xFIP_minus,playerid) %>%
     bind_rows(future_pitching2) %>%
     mutate(Time = case_when(Season <= current_season ~ 'past', 
                             Season > current_season ~ 'future')) %>% 
@@ -598,7 +560,11 @@ plot_past_future_comp <- function(past_pitching, future_pitching, player1, playe
                                   'H_Lower','H_Upper','BABIP_Lower','BABIP_Upper',
                                   'GS_Lower','GS_Upper','BB_Lower','BB_Upper',
                                   'SO_Lower','SO_Upper','BB_Per9_Lower',
-                                  'BB_Per9_Upper','K_Per9_Lower','K_Per9_Upper')], 
+                                  'BB_Per9_Upper','K_Per9_Lower','K_Per9_Upper',
+                                  'WHIP_Lower','WHIP_Upper','ERA_minus_Lower',
+                                  'ERA_minus_Upper','FIP_minus_Lower',
+                                  'FIP_minus_Upper','xFIP_minus_Lower',
+                                  'xFIP_minus_Upper')], 
               by = c('playerid' = 'Playerid', 'Season' = 'Season_Projected'))
   subset <- all %>% 
     filter(Name %in%  c(player1, player2)) 
@@ -622,7 +588,7 @@ ranking_projected_players <- function(future_data, season_projected)
   ranks_2020 <- future_data %>%
     filter(Season_Projected == season_projected) %>%
     select(Name,Season_Projected,Pos_Group_Current,K_Per9,BB_Per9,K.,BB.,
-           ERA,FIP,xFIP,BABIP,IP) %>% 
+           ERA,FIP,xFIP,BABIP,IP,WHIP,ERA_minus,FIP_minus,xFIP_minus) %>% 
     arrange(Season_Projected, Name)
   
   names <- ranks_2020$Name
@@ -634,12 +600,17 @@ ranking_projected_players <- function(future_data, season_projected)
   ranks$FIP = (nrow(ranks) + 1) - ranks$FIP
   ranks$xFIP = (nrow(ranks) + 1) - ranks$xFIP
   ranks$BABIP = (nrow(ranks) + 1) - ranks$BABIP
+  ranks$WHIP = (nrow(ranks) + 1) - ranks$WHIP
+  ranks$ERA_minus = (nrow(ranks) + 1) - ranks$ERA_minus
+  ranks$FIP_minus = (nrow(ranks) + 1) - ranks$FIP_minus
+  ranks$xFIP_minus = (nrow(ranks) + 1) - ranks$xFIP_minus
   
   ranks <- ranks %>% 
-    select(K_Per9,BB_Per9,K.,BB.,ERA,FIP,xFIP,BABIP,IP) %>%
+    select(K_Per9,BB_Per9,K.,BB.,ERA,FIP,xFIP,BABIP,IP,WHIP,ERA_minus,
+           FIP_minus,xFIP_minus) %>%
     mutate(Mean_Rank = round(rowMeans(.),2))
   ranks$Name <- names
   ranks <- ranks %>%
-    select(Name,Mean_Rank,K_Per9,BB_Per9,K.,BB.,ERA,FIP,xFIP,BABIP,IP)
+    select(Name,Mean_Rank,K_Per9,BB_Per9,K.,BB.,ERA,FIP,xFIP,BABIP,IP,WHIP)
   return(ranks %>% arrange(Mean_Rank))
 }
