@@ -317,8 +317,8 @@ predict_future_years <- function(historical_data, future_data, y_var, x_vars, x_
                                  model_type, tuneLength, years_out, errors, err_multiplier)
 {
   for (i in 1:length(errors))
-  { # 0.75, 0.25
-    keep <- errors[[i]] <= quantile(errors[[i]], c(0.9)) & errors[[i]] >= quantile(errors[[i]], c(0.1))
+  { # 0.9, 0.1
+    keep <- errors[[i]] <= quantile(errors[[i]], c(0.75)) & errors[[i]] >= quantile(errors[[i]], c(0.25))
     errors[[i]] <- errors[[i]][keep]
     
   }
@@ -377,32 +377,32 @@ predict_future_years <- function(historical_data, future_data, y_var, x_vars, x_
   model_preds <- predict(model, test, interval = "confidence")
   test$Stat_Projected <- model_preds * err_multiplier
   test <- test %>%
-    #mutate(err_lower = case_when(Season_Projected - Season_Current == 1 ~ min(errors[[1]]),
-                                 #Season_Projected - Season_Current == 2 ~ min(errors[[2]]),
-                                 #Season_Projected - Season_Current == 3 ~ min(errors[[3]]),
-                                 #Season_Projected - Season_Current == 4 ~ min(errors[[4]]),
-                                 #Season_Projected - Season_Current == 5 ~ min(errors[[5]])),
-           #err_upper = case_when(Season_Projected - Season_Current == 1 ~ max(errors[[1]]),
-                                 #Season_Projected - Season_Current == 2 ~ max(errors[[2]]),
-                                 #Season_Projected - Season_Current == 3 ~ max(errors[[3]]),
-                                 #Season_Projected - Season_Current == 4 ~ max(errors[[4]]),
-                                 #Season_Projected - Season_Current == 5 ~ max(errors[[5]]))
-           #) %>%
-    #mutate(Stat_Projected_Upper = Stat_Projected + (1*abs(err_upper*err_multiplier)),
-           #Stat_Projected_Lower = Stat_Projected - (1*abs(err_lower*err_multiplier)),
-           #Stat_Projected_Lower = ifelse(Stat_Projected_Lower < 0, 0, Stat_Projected_Lower)
-           #) %>%
-    #select(-err_lower, -err_upper) %>%
-    mutate(err = case_when(Season_Projected - Season_Current == 1 ~ mean(sample(errors[[1]], 200, replace = F)),
-                           Season_Projected - Season_Current == 2 ~ mean(sample(errors[[2]], 200, replace = F)),
-                           Season_Projected - Season_Current == 3 ~ mean(sample(errors[[3]], 200, replace = T)),
-                           Season_Projected - Season_Current == 4 ~ mean(sample(errors[[4]], 200, replace = T)),
-                           Season_Projected - Season_Current == 5 ~ mean(sample(errors[[5]], 200, replace = T)))) %>%
-    mutate(Stat_Projected_Upper = Stat_Projected + (2*abs(err*err_multiplier)),
-           Stat_Projected_Lower = Stat_Projected - (2*abs(err*err_multiplier)),
+    mutate(err_lower = case_when(Season_Projected - Season_Current == 1 ~ min(errors[[1]]),
+                                 Season_Projected - Season_Current == 2 ~ min(errors[[2]]),
+                                 Season_Projected - Season_Current == 3 ~ min(errors[[3]]),
+                                 Season_Projected - Season_Current == 4 ~ min(errors[[4]]),
+                                 Season_Projected - Season_Current == 5 ~ min(errors[[5]])),
+           err_upper = case_when(Season_Projected - Season_Current == 1 ~ max(errors[[1]]),
+                                 Season_Projected - Season_Current == 2 ~ max(errors[[2]]),
+                                 Season_Projected - Season_Current == 3 ~ max(errors[[3]]),
+                                 Season_Projected - Season_Current == 4 ~ max(errors[[4]]),
+                                 Season_Projected - Season_Current == 5 ~ max(errors[[5]]))
+           ) %>%
+    mutate(Stat_Projected_Upper = Stat_Projected + (1*abs(err_upper*err_multiplier)),
+           Stat_Projected_Lower = Stat_Projected - (1*abs(err_lower*err_multiplier)),
            Stat_Projected_Lower = ifelse(Stat_Projected_Lower < 0, 0, Stat_Projected_Lower)
-    ) %>%
-    select(-err) %>%
+           ) %>%
+    select(-err_lower, -err_upper) %>%
+    #mutate(err = case_when(Season_Projected - Season_Current == 1 ~ mean(sample(errors[[1]], 200, replace = F)),
+                           #Season_Projected - Season_Current == 2 ~ mean(sample(errors[[2]], 200, replace = F)),
+                           #Season_Projected - Season_Current == 3 ~ mean(sample(errors[[3]], 200, replace = T)),
+                           #Season_Projected - Season_Current == 4 ~ mean(sample(errors[[4]], 200, replace = T)),
+                           #Season_Projected - Season_Current == 5 ~ mean(sample(errors[[5]], 200, replace = T)))) %>%
+    #mutate(Stat_Projected_Upper = Stat_Projected + (2*abs(err*err_multiplier)),
+           #Stat_Projected_Lower = Stat_Projected - (2*abs(err*err_multiplier)),
+           #Stat_Projected_Lower = ifelse(Stat_Projected_Lower < 0, 0, Stat_Projected_Lower)
+    #) %>%
+    #select(-err) %>%
   filter(Season_Projected - Season_Current <= years_out)
   return(list(test, model))
 }

@@ -659,7 +659,7 @@ future_preds <- future_preds %>%
 pitchers <- add_projection_years(pitchers, 11)
 pitchers2 <- add_projected_prior_seasons(pitchers)
 pitchers2 <- merge_pitching_stats(pitchers2, c('IP','Pos_Group','K.','GB.',
-                                               'FB.','LD.','FBv','FB..1','HR.FB.1',
+                                               'FB.','LD.','FBv','FB_Thrown.','HR.FB.1',
                                                'O.Swing.','Z.Swing.','Swing.','Zone.',
                                                'O.Contact.','Z.Contact.','Contact.',
                                                'F.Strike.','SwStr.'))
@@ -731,7 +731,7 @@ future_preds <- future_preds %>%
 pitchers <- add_projection_years(pitchers, 11)
 pitchers2 <- add_projected_prior_seasons(pitchers)
 pitchers2 <- merge_pitching_stats(pitchers2, c('IP','Pos_Group','BB.','GB.',
-                                               'FB.','LD.','FBv','FB..1','HR.FB.1',
+                                               'FB.','LD.','FBv','FB_Thrown.','HR.FB.1',
                                                'O.Swing.','Z.Swing.','Swing.','Zone.',
                                                'O.Contact.','Z.Contact.','Contact.',
                                                'F.Strike.','SwStr.'))
@@ -803,7 +803,7 @@ future_preds <- future_preds %>%
 pitchers <- add_projection_years(pitchers, 11)
 pitchers2 <- add_projected_prior_seasons(pitchers)
 pitchers2 <- merge_pitching_stats(pitchers2, c('IP','Pos_Group','ERA','GB.',
-                                               'FB.','LD.','FBv','FB..1','HR.FB.1',
+                                               'FB.','LD.','FBv','FB_Thrown.','HR.FB.1',
                                                'O.Swing.','Z.Swing.','Swing.','Zone.',
                                                'O.Contact.','Z.Contact.','Contact.',
                                                'F.Strike.','SwStr.','Oppo.','Pull.',
@@ -880,7 +880,7 @@ future_preds <- future_preds %>%
 pitchers <- add_projection_years(pitchers, 11)
 pitchers2 <- add_projected_prior_seasons(pitchers)
 pitchers2 <- merge_pitching_stats(pitchers2, c('IP','Pos_Group','FIP','GB.',
-                                               'FB.','LD.','FBv','FB..1','HR.FB.1',
+                                               'FB.','LD.','FBv','FB_Thrown.','HR.FB.1',
                                                'O.Swing.','Z.Swing.','Swing.','Zone.',
                                                'O.Contact.','Z.Contact.','Contact.',
                                                'F.Strike.','SwStr.','Oppo.','Pull.',
@@ -957,7 +957,7 @@ future_preds <- future_preds %>%
 pitchers <- add_projection_years(pitchers, 11)
 pitchers2 <- add_projected_prior_seasons(pitchers)
 pitchers2 <- merge_pitching_stats(pitchers2, c('IP','Pos_Group','xFIP','GB.',
-                                               'FB.','LD.','FBv','FB..1','HR.FB.1',
+                                               'FB.','LD.','FBv','FB_Thrown.','HR.FB.1',
                                                'O.Swing.','Z.Swing.','Swing.','Zone.',
                                                'O.Contact.','Z.Contact.','Contact.',
                                                'F.Strike.','SwStr.','Oppo.','Pull.',
@@ -1113,14 +1113,14 @@ projection_comp_plot2(future_preds,'Madison Bumgarner','Clayton Kershaw','BABIP'
 past_player_performance(pitching, 'Madison Bumgarner', 'H')
 past_player_performance_comp1(pitching, 'Madison Bumgarner','Clayton Kershaw','FIP')
 
-plot_past_future(pitching, future_preds, 'Clayton Kershaw', 'ERA_minus','xFIP_Lower','xFIP_Upper')
-plot_past_future_comp(pitching, future_preds, 'Madison Bumgarner','Clayton Kershaw',
-                      'IP','IP_Lower','IP_Upper')
-#############################################################################
+plot_past_future(pitching, future_preds, 'Clayton Kershaw', 'ERA_minus','ERA_minus_Lower','ERA_minus_Upper')
+plot_past_future_comp(pitching, future_preds, 'Kenley Jansen','Aroldis Chapman',
+                      'ERA_minus','ERA_minus_Lower','ERA_minus_Upper')
+  #############################################################################
 # Which players are projected higher, lower for next season
 current_season = 2019
 all <- plot_past_future_comp(pitching, future_preds, 'Clayton Kershaw', 'Madison Bumgarner',
-                             'xFIP','xFIP_Lower','xFIP_Upper')
+                             'ERA_minus','ERA_minus_Lower','ERA_minus_Upper')
 all <- all %>% filter(Season >= current_season, Season <= current_season + 1)
 list_of_names <- unique(all$Name)
 list <- list()
