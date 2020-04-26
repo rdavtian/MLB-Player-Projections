@@ -165,7 +165,8 @@ hist(mapes$Mape, breaks = 100, col = 'cyan', xlim = c(0, 70))
 hist(resid, breaks = 50, col = 'green')
 
 ####################################################################################
-# Projecting PA 
+# Projecting PA
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
 hitters2 <- merge_hitting_stats(hitters2, c('PA','PA_PerG'))
 history_future <- historical_future_split(hitters2, current_season)
@@ -206,6 +207,7 @@ future_preds <- z[[1]] %>%
          PA_Lower = 'Stat_Projected_Lower')
 #######################################################################################
 # Projecting K%
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
 hitters2 <- merge_hitting_stats(hitters2, c('PA','K.','SwStr.','Swing.','Contact.',
                                             'Zone.','F.Strike.','O.Contact.','Z.Contact.',
@@ -262,6 +264,7 @@ future_preds <- future_preds %>%
          SO_Lower = PA_Lower * K._Lower)
 #######################################################################################
 # Projecting BB%
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
 hitters2 <- merge_hitting_stats(hitters2, c('PA','BB.','SwStr.','Swing.','Contact.',
                                             'Zone.','F.Strike.','O.Contact.','Z.Contact.',
@@ -318,6 +321,7 @@ future_preds <- future_preds %>%
          BB_Lower = PA_Lower * BB._Lower)
 #######################################################################################
 # Projecting HBP
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
 hitters2 <- merge_hitting_stats(hitters2, c('PA','PA_PerHBP'))
 history_future <- historical_future_split(hitters2, current_season)
@@ -360,6 +364,7 @@ future_preds <- future_preds %>%
   mutate(HBP = PA / PA_PerHBP)
 #######################################################################################
 # Projecting SF
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
 hitters2 <- merge_hitting_stats(hitters2, c('PA','PA_PerSF'))
 history_future <- historical_future_split(hitters2, current_season)
@@ -406,6 +411,7 @@ future_preds <- future_preds %>%
          AB_Upper = PA_Upper - BB_Upper - HBP - SF)
 #######################################################################################
 # Projecting BIP AVG
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
 hitters2 <- merge_hitting_stats(hitters2, c('PA','BIP_AVG','SwStr.','Swing.','Contact.',
                                             'Zone.','F.Strike.','O.Contact.','Z.Contact.',
@@ -471,6 +477,7 @@ future_preds <- future_preds %>%
          BIP_Lower = PA_Lower * BIP_AVG_Lower)
 #######################################################################################
 # Projecting BABIP
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
 hitters2 <- merge_hitting_stats(hitters2, c('PA','BABIP','xBABIP','SwStr.','Swing.','Contact.',
                                             'Zone.','F.Strike.','O.Contact.','Z.Contact.',
@@ -533,8 +540,9 @@ future_preds <- future_preds %>%
   inner_join(BABIP, by = c('Playerid','Season_Projected'))
 #######################################################################################
 # Projecting FB%
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
-hitters2 <- merge_hitting_stats(hitters2, c('PA','FB.','SwStr.','Swing.','Contact.',
+hitters2 <- merge_hitting_stats(hitters2, c('PA','SwStr.','Swing.','Contact.',
                                             'Zone.','F.Strike.','O.Contact.','Z.Contact.',
                                             'Z.Swing.','O.Swing.','FB.','LD.','GB.','Pull.',
                                             'Oppo.','Cent.','Hard.','Med.','Soft.','Spd'))
@@ -596,6 +604,7 @@ future_preds <- future_preds %>%
          Num_FB_Lower = FB._Lower * BIP_Lower)
 #######################################################################################
 # Projecting HR/FB
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
 hitters2 <- merge_hitting_stats(hitters2, c('PA','HR.FB','Hard.','ISO','Pull.',
                                             'Cent.','Oppo.','LD.','FB.'))
@@ -650,8 +659,9 @@ future_preds <- future_preds %>%
          HR_Lower = Num_FB_Lower * HR.FB_Lower)
 #######################################################################################
 # Projecting AVG
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
-hitters2 <- merge_hitting_stats(hitters2, c('PA','AVG','FB.','SwStr.','Swing.','Contact.',
+hitters2 <- merge_hitting_stats(hitters2, c('PA','AVG','SwStr.','Swing.','Contact.',
                                             'Zone.','F.Strike.','O.Contact.','Z.Contact.',
                                             'Z.Swing.','O.Swing.','FB.','LD.','GB.','Pull.',
                                             'Oppo.','Cent.','Hard.','Med.','Soft.','Spd'))
@@ -709,8 +719,9 @@ future_preds <- future_preds %>%
   inner_join(AVG, by = c('Playerid','Season_Projected'))
 #######################################################################################
 # Projecting wRC+
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
-hitters2 <- merge_hitting_stats(hitters2, c('PA','wRC.','FB.','SwStr.','Swing.','Contact.',
+hitters2 <- merge_hitting_stats(hitters2, c('PA','wRC.','SwStr.','Swing.','Contact.',
                                             'Zone.','F.Strike.','O.Contact.','Z.Contact.',
                                             'Z.Swing.','O.Swing.','FB.','LD.','GB.','Pull.',
                                             'Oppo.','Cent.','Hard.','Med.','Soft.','Spd'))
@@ -768,8 +779,9 @@ future_preds <- future_preds %>%
   inner_join(wRC., by = c('Playerid','Season_Projected'))
 #######################################################################################
 # Projecting wOBA
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
-hitters2 <- merge_hitting_stats(hitters2, c('PA','wOBA','FB.','SwStr.','Swing.','Contact.',
+hitters2 <- merge_hitting_stats(hitters2, c('PA','wOBA','SwStr.','Swing.','Contact.',
                                             'Zone.','F.Strike.','O.Contact.','Z.Contact.',
                                             'Z.Swing.','O.Swing.','FB.','LD.','GB.','Pull.',
                                             'Oppo.','Cent.','Hard.','Med.','Soft.','Spd'))
@@ -830,8 +842,9 @@ future_preds <- future_preds %>%
          Hits_Lower = AB_Lower * AVG_Lower)
 #######################################################################################
 # Projecting OBP
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
-hitters2 <- merge_hitting_stats(hitters2, c('PA','OBP','FB.','SwStr.','Swing.','Contact.',
+hitters2 <- merge_hitting_stats(hitters2, c('PA','OBP','SwStr.','Swing.','Contact.',
                                             'Zone.','F.Strike.','O.Contact.','Z.Contact.',
                                             'Z.Swing.','O.Swing.','FB.','LD.','GB.','Pull.',
                                             'Oppo.','Cent.','Hard.','Med.','Soft.','Spd'))
@@ -889,8 +902,9 @@ future_preds <- future_preds %>%
   inner_join(OBP, by = c('Playerid','Season_Projected'))
 #######################################################################################
 # Projecting SLG
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
-hitters2 <- merge_hitting_stats(hitters2, c('PA','SLG','FB.','SwStr.','Swing.','Contact.',
+hitters2 <- merge_hitting_stats(hitters2, c('PA','SLG','SwStr.','Swing.','Contact.',
                                             'Zone.','F.Strike.','O.Contact.','Z.Contact.',
                                             'Z.Swing.','O.Swing.','FB.','LD.','GB.','Pull.',
                                             'Oppo.','Cent.','Hard.','Med.','Soft.','Spd'))
@@ -954,8 +968,9 @@ future_preds <- future_preds %>%
          OPS_Upper = OBP_Upper + SLG_Upper)
 #######################################################################################
 # Projecting RBI Per BIP
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
-hitters2 <- merge_hitting_stats(hitters2, c('PA','RBI_Per_BIP','FB.','SwStr.','Swing.','Contact.',
+hitters2 <- merge_hitting_stats(hitters2, c('PA','RBI_Per_BIP','SwStr.','Swing.','Contact.',
                                             'Zone.','F.Strike.','O.Contact.','Z.Contact.',
                                             'Z.Swing.','O.Swing.','FB.','LD.','GB.','Pull.',
                                             'Oppo.','Cent.','Hard.','Med.','Soft.','Spd'))
@@ -1018,8 +1033,9 @@ future_preds <- future_preds %>%
          RBI_Upper = RBI_Per_BIP_Upper*(BIP_Upper - SF) + (1.565*HR_Upper) + SF)
 #######################################################################################
 # Projecting Runs Per TOB
+hitters <- add_projection_years(hitters, 11)
 hitters2 <- add_projected_prior_seasons(hitters)
-hitters2 <- merge_hitting_stats(hitters2, c('PA','Runs_Per_TOB','FB.','SwStr.','Swing.','Contact.',
+hitters2 <- merge_hitting_stats(hitters2, c('PA','Runs_Per_TOB','SwStr.','Swing.','Contact.',
                                             'Zone.','F.Strike.','O.Contact.','Z.Contact.',
                                             'Z.Swing.','O.Swing.','FB.','LD.','GB.','Pull.',
                                             'Oppo.','Cent.','Hard.','Med.','Soft.','Spd'))
