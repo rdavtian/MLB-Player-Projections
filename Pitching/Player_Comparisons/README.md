@@ -25,7 +25,6 @@ http://htmlpreview.github.io/?https://github.com/rdavtian/MLB-Player-Projections
 http://htmlpreview.github.io/?https://github.com/rdavtian/MLB-Player-Projections/blob/master/Pitching/Player_Comparisons/Player_Rankings_Forecasts/2020_Player_Ranking_Forecasts.html
 
 #2021
-
 http://htmlpreview.github.io/?https://github.com/rdavtian/MLB-Player-Projections/blob/master/Pitching/Player_Comparisons/Player_Rankings_Forecasts/2021_Player_Ranking_Forecasts.html
 
 #2022
