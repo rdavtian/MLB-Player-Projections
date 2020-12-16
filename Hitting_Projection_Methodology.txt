@@ -1,0 +1,129 @@
+Methodology for Hitting:
+
+
+
+Data: 
+fangraphs_hitting.csv:
+Gathered FanGraphs data from 1990 to 2019 and collected counting stats, rate stats, sabermetrics, 
+and batted ball characteristics for hitters with at least 70 plate appearances. However, FanGraphs
+did not start collecting batted ball characteristics or pitch level data until 2002 so all years before
+are filtered out in the modeling stages. 
+
+player_age_seasons.csv:
+Small data set of season, player name, team, age, and playerid. This data is used to add future projection years
+(2020 and beyond) with the knowledge of a players age in the future and using their 2019 team as the future team.  
+
+park_factors.csv:
+Small data set that holds ESPN park factors for each team.
+
+positions.csv:
+Small data set that holds the positions and innings played at each position for each season. Also
+holds season, player name, and playerid. 
+
+ 
+
+Assumptions: 
+If a player plays for multiple teams within the same season, then the team name column is null.
+If the team name for a player is null for the current 2019 season, then I take the team they most
+recently played on and extrapolate that team into 2019 and future projection years. If a player does
+not have a team for years prior to 2019, then I fill that year with the team they played for the following
+year. For future projections beyond 2019, I assume their team in the future is the most recent team they 
+played for in 2019. For players that played multiple positions within a season, I took the position at which
+they played the most innings at as the main position. Lastly, I assumed a players future position is just their 
+current position extrapolated into the future. 
+
+
+Data Manipulation, Cleaning, Engineering:
+For players that have played since 2018, I added future seasons (2020 through 2030) using their 2019 team as 
+the same team going forward and their projected age for each season. Also, I added an mlb service year 
+variable that increments by one after each season starting from their first major league season with at 
+least 50 plate appearances. I kept players where projected age is less than or equal to 42. 
+
+To create a clean data set for modeling, I joined the player_age_seasons.csv data with itself on seasons to 
+get all possible pairwise combinations of current and projected seasons. I only kept rows where projected seasons
+are greater than the current season. For example, Mike Trout's rookie season was in 2011. He will have eight total 
+rows in the dataset where the current season is 2011. The projected season increments by one for each row. 
+The first row for Mike Trout is where current season is 2011 and the projected season is 2012. The next row is 
+where the current season is 2011 and the projected season is 2013 and so on until the most current season (2019).
+This example is just for 1 year out projections. The same structure holds for multiple year projections.  
+Each row has statistics and info on players for that current season and the projected seasons. There exists 
+all possible pairwise comparisons between current season and future porjected seasons.
+
+Next, I wanted to add 2 lagged seasons to each row so that I could use stats for the previous 2 seasons to predict 
+how players will perform in future years. For Mike Trout, if the current season is 2015 and I am trying to forecast
+2016 performance, I will use is current 2015 season as well as his 2014, and 2013 statistics to project his 2016 
+performance. Also, I adjusted the position column to be position group where I grouped LF, CF, RF into a group
+called outfield and 1B and 3B into a group called corner infield. I kept catchers into their own position group
+and concatenated 2B and SS into middle infielders. Since I want to use a players previous 2 years of performance, 
+I cannot project hitters that have less than 3 years of MLB seasons.       
+
+ 
+
+
+Modeling Methods for Hitters:
+When training models, I used harmonic mean of plate appearances as a weight between the projected and current 
+seasons. Also, I used 3-Fold CV in all of my models. 
+
+I used a two step modeling process to be able to not only have a point estimate for future seasons, but to have
+some level of confidence around those point estimates. I chose to focus on projecting at most six years into the 
+future. My first step was to use historical data where current season is from 2018 and before and the 
+projected season is from 2019 and before. To start, I split the historical data set into a train, test split 
+where 2010 is the cutoff. I trained my models from 2002 to 2010 and predicted 2011 as a one year projection and 
+stored performance metrics and residuals (RMSE, MAPE {Mean Absolute Percentage Error}). Next, I iterated training
+and testing through each one year projection. In other words, I used a moving window approach and incremented my 
+train, test cutoff by one for each iteration and increased the prediction season by one until the most recent season.
+(train 02-10 & test 11, train 02-11, test 12, ... train 02-18, test 19). For each of the one year out projections, 
+I can aggregate and store all residuals, performance metrics to form an error distribution for all one year out 
+projections. I did this iteratively for 2, 3, 4, 5, and 6 year forecasts. The goal of this is to have a large 
+error distribution for each years out forecast that I can sample from and use to formulate a prediction confidence
+interval between the point estimates of future projections. 
+
+Now that I have error distributions for each of the years out forecasts, I use all of the histroical data (02-18)
+where the most recent current season is 2018 and the most recent projected season is 2019. The model is trained with 
+the same x, y inputs and predict up to six years into the future using the test data set that has 2019 as the 
+current season, 2018 and 2017 as the prior two seasons and 2020 and beyond for the predictions. The only knowledge 
+we have in the future or that we can assume is future age, future position, and future mlb service years. The 
+point estimate forecasts will vary based on those factors. Once I have the point estimates, I can use the
+mean or median of lots of bootstrap samples from the error distributions and approximate a 95% confidence bound 
+by computing the following, point estimate (+ -) 2 * mean of bootstrap sample. In theory, predictions should be
+worse the farther you project into the future which means the mean or median of the boostrapped samples should 
+increase as years forecasted into the future increases.    
+    
+
+1) Project total plate appearances by modeling plate appearances per game in the projected season given 
+plate appearances per game in the current season and previous two seasons as well as projected age, 
+projected position group, and projected mlb service. I assume all players play 150 games a season so I multiply
+projeced plate appearances per game by 150 to get the forecasted total plate appearance per season. 
+
+2) Project strikeout rate given strikeout rate in the current season and previous two seasons as well as current
+and prior batted ball characteristics (SwStr%, Swing%, Contact%, Zone%). I also use projected age, projected 
+position group, and projected mlb service in years. Lastly, I can estimate number of strikeouts for each batter
+by multiplying projected strikeout rate with projected total plate appearances for each season.  
+
+3) Project walk rate given walk rate in the current season and previous two seasons as well as current
+and prior batted ball characteristics (SwStr%, Swing%, Contact%, Zone%, Inside Contact%, Outside Contact%,
+Inside Swing%, Outside Swing%). I also use projected age, projected position group, and projected mlb service 
+in years. Lastly, I can estimate number of walks for each batter by multiplying projected walk rate with 
+projected total plate appearances for each season.  
+
+4) Project Total HBP by modeling number of plate appearances per hit by pitch given current and prior 2 seasons
+of number of plate appearances per hit by pitch and projected age, projected position group, and projected mlb 
+service in years. Find total projected HBP by the following division (Projected PA / Projected PA Per HBP).
+
+5) Project Total SF by modeling number of plate appearances per sacrifice fly given current and prior 2 seasons
+of number of plate appearances per sacrifice fly and projected age, projected position group, and projected mlb 
+service in years. Find total projected SF by the following division (Projected PA / Projected PA Per SF).
+
+Now, I have enough to project AB by using the formulas (Projected PA - Projected BB - Projected HBP - Projected SF)
+
+6) Project number of balls put into play by modeling proportion of balls put in play out of all PA given batted ball
+and plate characterisitics from the current season and previous 2 seasons (GB%, FB%, LD%, Soft%, Med%, Hard%, K%, 
+BB%, Contact%, Inside Contact%, Outside Contact%, Swing%). I multiply forecasted proportion of balls put in play
+with forecasted PA to get estimated number of balls put into play.
+
+7) Project BABIP 
+
+8) Project FB% then number of fly balls = FB% * BIP
+
+9) Project HR/FB rate, then total HR = HR/FB rate * Number of Fly Balls
+ 
