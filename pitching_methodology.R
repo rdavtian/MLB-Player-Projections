@@ -1,0 +1,45 @@
+# https://prepaid.bankofamerica.com/eddcard/verify/signin?Logout=True
+# https://portal.edd.ca.gov/WebApp/Logout
+# https://tht.fangraphs.com/research-notebook-new-format-for-statcast-data-export-at-baseball-savant/
+# https://thedynastyguru.com/2019/02/27/aging-gracefully-approaching-aging-curves-and-advanced-stats-part-ii/
+
+#left hitting, right pitching
+
+#1) Project G
+#2) Project GS
+#3) Project IP using IP_PerG and then multiply by G
+#4) Project Start.IP using Start.IP_PerGS and then * by GS
+#5) Project Hits Per Inning, then multiply by IP to estimate total hits allowed
+#6) Project BB Per Inning, then multiply by IP to estimate total BB allowed
+#7) Project log(HBP) Per Inning, then exp() and then multiply by IP to estimate total HBP allowed
+#8) Create TBP = IP * 2.9 + H + BB + HBP
+#9) Project BABIP (xBABIP, pull, oppo, cent, soft, med, hard)
+#10) Project BIP using BIP_PerIP and then * by IP to get estimate BIP
+#11) Project K%
+#12) Project BB%
+#13) Create SO = K% * TBF
+#14) Create BB = B% * TBF
+#15) Create K_Per9 = (SO / IP) * 9
+#16) Create BB_Per9 = (BB / IP) * 9
+#19) Project ERA, FIP, xFIP
+
+#17) Create WHIP (H + BB) / IP
+#18) Project WHIP using batted ball and pitch characteristics
+
+# E2 = GS
+# F2 = IP
+# G2 (Innings Pitched As Starter) = Start.IP
+# H2 (IP/GS) = Start.IP / GS
+# I2 (Total Batters Faced) TBF = IP * 2.9 + Hits + BB + HBP
+# J2 (BIP) = TBF - HR - SO - BB - HBP
+# S2 (HR) = (FB% * HR/FB)*(BIP * HR)
+# T2 (SO) = K% * TBF
+# U2 (BB) = BB% * TBF
+# W2 (K_Per_9) = (SO / IP) * 9
+# X2 (BB_Per_9) = (BB / IP) * 9
+# AK2 (WHIP) = (H + BB) / IP
+
+# If I have 150 omitted variables, I need to run 150 regressions for each omitted 
+# variable (omitted variable ~ explanatory variables) where the 150 comes from 
+# 150 different groups of clusters (public/private attendance) based on 
+# same schools applied and accepted by chose private over public and vice versa
