@@ -1,10 +1,3 @@
-# https://prepaid.bankofamerica.com/eddcard/verify/signin?Logout=True
-# https://portal.edd.ca.gov/WebApp/Logout
-# https://tht.fangraphs.com/research-notebook-new-format-for-statcast-data-export-at-baseball-savant/
-# https://thedynastyguru.com/2019/02/27/aging-gracefully-approaching-aging-curves-and-advanced-stats-part-ii/
-
-#left hitting, right pitching
-
 #1) Project G
 #2) Project GS
 #3) Project IP using IP_PerG and then multiply by G
@@ -38,8 +31,3 @@
 # W2 (K_Per_9) = (SO / IP) * 9
 # X2 (BB_Per_9) = (BB / IP) * 9
 # AK2 (WHIP) = (H + BB) / IP
-
-# If I have 150 omitted variables, I need to run 150 regressions for each omitted 
-# variable (omitted variable ~ explanatory variables) where the 150 comes from 
-# 150 different groups of clusters (public/private attendance) based on 
-# same schools applied and accepted by chose private over public and vice versa
