@@ -44,7 +44,7 @@ get all possible pairwise combinations of current and projected seasons. I only 
 are greater than the current season. For example, Mike Trout's rookie season was in 2011. He will have eight total 
 rows in the dataset where the current season is 2011. The projected season increments by one for each row. 
 The first row for Mike Trout is where current season is 2011 and the projected season is 2012. The next row is 
-where the current season is 2011 and the projected season is 2013 and so on until the most current season (2019).
+where the current season is 2012 and the projected season is 2013 and so on until the most current season (2019).
 This example is just for 1 year out projections. The same structure holds for multiple year projections.  
 Each row has statistics and info on players for that current season and the projected seasons. There exists 
 all possible pairwise comparisons between current season and future porjected seasons.
