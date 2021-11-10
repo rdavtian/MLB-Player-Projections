@@ -19,6 +19,9 @@ http://htmlpreview.github.io/?https://github.com/rdavtian/MLB-Player-Projections
 #2024
 http://htmlpreview.github.io/?https://github.com/rdavtian/MLB-Player-Projections/blob/master/Hitting/Player_Comparisons/Player_Metrics_Forecasts/2024_Player_Metric_Forecasts.html
 
+#2025
+http://htmlpreview.github.io/?https://github.com/rdavtian/MLB-Player-Projections/blob/master/Hitting/Player_Comparisons/Player_Metrics_Forecasts/2025_Player_Metric_Forecasts.html
+
 ## Player Rankings Forecasts
 
 #2020
@@ -35,3 +38,6 @@ http://htmlpreview.github.io/?https://github.com/rdavtian/MLB-Player-Projections
 
 #2024
 http://htmlpreview.github.io/?https://github.com/rdavtian/MLB-Player-Projections/blob/master/Hitting/Player_Comparisons/Player_Rankings_Forecasts/2024_Player_Ranking_Forecasts.html
+
+#2025
+http://htmlpreview.github.io/?https://github.com/rdavtian/MLB-Player-Projections/blob/master/Hitting/Player_Comparisons/Player_Rankings_Forecasts/2025_Player_Ranking_Forecasts.html
