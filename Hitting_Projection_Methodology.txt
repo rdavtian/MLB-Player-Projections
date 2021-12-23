@@ -1,7 +1,6 @@
 Methodology for Hitting:
 
 
-
 Data: 
 fangraphs_hitting.csv:
 Gathered FanGraphs data from 1990 to 2019 and collected counting stats, rate stats, sabermetrics, 
