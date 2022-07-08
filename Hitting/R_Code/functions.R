@@ -1,3 +1,4 @@
+#https://www.usatoday.com/sports/mlb/salaries/2008/player/all/
 baseball_fangraphs_scraper <- function(area, season_start, season_end, league = "all", qual, ind = 1, pitcher_type = "pit")
 {
   if (str_to_lower(area) == "hitting")
