@@ -523,15 +523,15 @@ train_models <- function(historical_data, y_var, x_vars, model_type, tuneLength,
     model1 <- caret::train(as.formula(paste0(y_var, " ~ ", paste0(x_vars2, collapse = " + "))),
                            data = train, method = model_type, tuneLength = tuneLength, verbose = F,
                            weights = PA_Harmonic, trControl = control, metric = 'MAE',
-                           preProcess = c('center','scale','nzv'), tau = 0.05)
+                           preProcess = c('scale','center','nzv'), tau = 0.05)
     model2 <- caret::train(as.formula(paste0(y_var, " ~ ", paste0(x_vars2, collapse = " + "))),
                            data = train, method = model_type, tuneLength = tuneLength, verbose = F,
                            weights = PA_Harmonic, trControl = control, metric = 'MAE',
-                           preProcess = c('center','scale','nzv'), tau = 0.5)
+                           preProcess = c('scale','center','nzv'), tau = 0.5)
     model3 <- caret::train(as.formula(paste0(y_var, " ~ ", paste0(x_vars2, collapse = " + "))),
                            data = train, method = model_type, tuneLength = tuneLength, verbose = F,
                            weights = PA_Harmonic, trControl = control, metric = 'MAE',
-                           preProcess = c('center','scale','nzv'), tau = 0.95)
+                           preProcess = c('scale','center','nzv'), tau = 0.95)
   }
   if(plot)
   {

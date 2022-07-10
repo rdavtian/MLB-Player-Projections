@@ -1,0 +1,13 @@
+name: mlb_player_projections
+title: mlb_player_projections
+username:
+account: rdavtian
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6619777
+bundleId: 6086149
+url: https://rdavtian.shinyapps.io/mlb_player_projections/
+when: 1657490352.60182
+lastSyncTime: 1657490352.60184
+asMultiple: FALSE
+asStatic: FALSE
