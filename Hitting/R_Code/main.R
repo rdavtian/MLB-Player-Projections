@@ -1,4 +1,4 @@
-setwd("C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Hitting/R_Code")
+setwd("C:/Users/rusla/OneDrive/MLBAnalyticsJobs/MLB Player Projections/Hitting/R_Code")
 library('dplyr')
 library('knitr')
 library('corrplot')
