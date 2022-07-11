@@ -34,11 +34,11 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
           conditionalPanel(condition = "input.user_display_type_player_proj == 'Table'",
                            selectInput("user_quantiles_player_proj","Quantiles",  choices = c("Choose...","5th","50th","95th"))),
           conditionalPanel(condition = "input.user_display_type_player_proj == 'Plot' & input.user_player_type_player_proj == 'Batter'",
-                           selectInput("user_stat_player_proj","Select Stat",  choices = c("Choose...","PA","AB","H","BB","SO","BB%","K%",
+                           selectInput("user_stat1_player_proj","Select Stat",  choices = c("Choose...","PA","AB","H","BB","SO","BB%","K%",
                                                                                            "ISO","BABIP","AVG","OBP","SLG","OPS","wOBA",
                                                                                            "wRC+","WAR/162"))),
           conditionalPanel(condition = "input.user_display_type_player_proj == 'Plot' & input.user_player_type_player_proj == 'Pitcher'",
-                           selectInput("user_stat_player_proj","Select Stat",  choices = c("Choose...","IP","ERA","FIP")))
+                           selectInput("user_stat2_player_proj","Select Stat",  choices = c("Choose...","IP","ERA","FIP")))
         ), 
         conditionalPanel(
           condition = "input.user_output_type == 'user_player_comparison_plot'",
@@ -69,10 +69,9 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
   server <- function(input, output, session) 
   {
     output$plot <- renderUI({
-      
       if (input$user_output_type == "user_leaderboards")
       {
-        if ((input$user_player_type_leaderboards == "Batter") * (input$user_player_type_leaderboards != "Choose..."))
+        if (input$user_player_type_leaderboards != "Choose...")
         {
           season <- input$user_season_leaderboards
           quantile <- input$user_quantiles_leaderboards
@@ -84,9 +83,11 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
           } else if (quantile == "95th") {
             quantile <- 0.95
           }
-          if ((season != "Choose...") & (quantile != "Choose..."))
+          if ((input$user_player_type_leaderboards == "Batter") & (season != "Choose...") & (quantile != "Choose..."))
           {
             output$tbl <- renderDT({datatable(print_projection_leaderboards(season, future_preds_hitters, quantile), rownames= FALSE) %>% DT::formatPercentage(c("BB%","K%"), digits = 1)})
+          } else if ((input$user_player_type_leaderboards == "Pitcher") & (season != "Choose...") & (quantile != "Choose...")) {
+            output$tbl <- renderText({"Pitching Leaderboard Projections to be continued: Hittting Leaderboard Projections in Production"})
           }
         }
       } else if (input$user_output_type == "user_player_specific_projections") {
@@ -97,7 +98,7 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
           {
             batter <- input$user_name1_input_player_proj
             
-            if ((input$user_display_type_player_proj == "Table") & (input$user_display_type_player_proj != "Choose..."))
+            if ((input$user_display_type_player_proj == "Table") & (input$user_display_type_player_proj != "Choose...") & (input$user_quantiles_player_proj != "Choose..."))
             {
               quantile <- input$user_quantiles_player_proj
               if (quantile == "5th")
@@ -111,8 +112,8 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
               output$tbl <- renderText({print_player_projections(batter, quantile, past_hitting_data, future_preds_hitters)})
               htmlOutput("tbl")
               
-            } else if ((input$user_display_type_player_proj == "Plot") & (input$user_display_type_player_proj != "Choose...") & (input$user_stat_player_proj != "Choose...")) {
-              stat <- input$user_stat_player_proj
+            } else if ((input$user_display_type_player_proj == "Plot") & (input$user_display_type_player_proj != "Choose...") & (input$user_stat1_player_proj != "Choose...")) {
+              stat <- input$user_stat1_player_proj
               if (stat %in% c("K%","BB%"))
               {
                 stat <- str_replace(stat, "%", "_pct")
@@ -123,6 +124,37 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
                 stat <- str_replace(stat, "\\+", "_plus")
                 output$plot2 <- renderPlot({plot_past_future_performance(batter, past_hitting_data, future_preds_hitters, stat, percent = F)})
                 plotOutput("plot2", width = "125%", height = "400px") 
+              }
+            }
+          }
+        } else if (input$user_player_type_player_proj == "Pitcher") {
+          if (input$user_name2_input_player_proj != "Choose...")
+          {
+            pitcher <- input$user_name2_input_player_proj
+            
+            if ((input$user_display_type_player_proj == "Table") & (input$user_display_type_player_proj != "Choose...") & (input$user_quantiles_player_proj != "Choose..."))
+            {
+              quantile <- input$user_quantiles_player_proj
+              if (quantile == "5th")
+              {
+                quantile <- 0.05
+              } else if (quantile == "50th") {
+                quantile <- 0.5
+              } else if (quantile == "95th") {
+                quantile <- 0.95
+              }
+              output$tbl <- renderText({"Pitching Player Specific Projections Table to be continued: Hittting Player Specific Projections Table in Production"})
+              
+            } else if ((input$user_display_type_player_proj == "Plot") & (input$user_display_type_player_proj != "Choose...") & (input$user_stat2_player_proj != "Choose...")) {
+              stat <- input$user_stat2_player_proj
+              if (stat %in% c("K%","BB%"))
+              {
+                stat <- str_replace(stat, "%", "_pct")
+                output$tbl <- renderText({"Pitching Player Specific Projections Plot to be continued: Hittting Player Specific Projections Plot in Production"})
+              } else {
+                stat <- str_replace(stat, "/162", "_162_G")
+                stat <- str_replace(stat, "\\+", "_plus")
+                output$tbl <- renderText({"Pitching Player Specific Projections Plot to be continued: Hittting Player Specific Projections Plot in Production"})
               }
             }
           }
@@ -149,6 +181,26 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
                 stat <- str_replace(stat, "\\+", "_plus")
                 output$plot2 <- renderPlot({plot_player_comparison(batter1, batter2, past_hitting_data, future_preds_hitters, stat, percent = F)})
                 plotOutput("plot2", width = "125%", height = "400px") 
+              }
+            }
+          }
+        } else if ((input$user_player_type_player_comp == "Pitcher"))
+        {
+          if ((input$user_name1_input_pitcher_comp != "Choose...") & (input$user_name2_input_pitcher_comp != "Choose..."))
+          {  
+            pitcher1 <- input$user_name1_input_pitcher_comp
+            pitcher2 <- input$user_name2_input_pitcher_comp
+            if (input$user_stat_input_pitcher_comp != "Choose...")
+            {
+              stat <- input$user_stat_input_pitcher_comp
+              if (stat %in% c("K%","BB%"))
+              {
+                stat <- str_replace(stat, "%", "_pct")
+                output$tbl <- renderText({"Pitching Player Projection Comparison Plot to be continued: Hittting Player Projection Comparison Plot in Production"})
+              } else {
+                stat <- str_replace(stat, "/162", "_162_G")
+                stat <- str_replace(stat, "\\+", "_plus")
+                output$tbl <- renderText({"Pitching Player Projection Comparison Plot to be continued: Hittting Player Projection Comparison Plot in Production"})
               }
             }
           }

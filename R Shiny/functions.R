@@ -1,6 +1,6 @@
 future_preds_hitters <- read.csv("https://raw.githubusercontent.com/rdavtian/MLB-Player-Projections/master/Hitting/Data/hitting_projections_data.csv", fileEncoding = 'UTF-8-BOM')
-
 future_preds_pitchers <- data.frame(Name = c("Carlos Rodon","Logan Webb"))
+
 quantiles <- c("5th", "50th (Median)", "95th")
 current_season <- as.numeric(substr(Sys.Date(), 1, 4)) - 1
 
@@ -153,7 +153,8 @@ print_player_projections <- function(player, quantile, past_data, future_data)
   past <- past_data %>% 
     filter(Name == player) %>% 
     select(Season, Age, G, AB, PA, H, BB, SO, BB_pct, K_pct, BB_K, AVG, OBP, 
-           SLG, OPS, ISO, BABIP, wOBA, wRC_plus, WAR_162_G) %>% 
+           SLG, OPS, ISO, BABIP, wOBA, wRC_plus, WAR_162_G) %>%
+    mutate(BB_pct = paste0(BB_pct, "%"), K_pct = paste0(K_pct, "%")) %>%
     rename("BB%" = "BB_pct", "K%" = "K_pct", "BB/K" = "BB_K", "wRC+" = "wRC_plus",
            "WAR/162" = "WAR_162_G")
   
