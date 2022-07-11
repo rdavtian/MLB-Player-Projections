@@ -306,9 +306,5 @@ future_preds <- future_preds %>%
          ISO_Projected = SLG_Projected - AVG_Projected,
          ISO_Projected_Upper = SLG_Projected_Upper - AVG_Projected_Upper)
 
-
 setwd("C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Hitting/Data")
 write.csv(future_preds, "hitting_projections_data.csv", row.names = F)
-hitters <- unique(future_preds$Name)
-seasons <- unique(future_preds$Season_Projected)
-quantiles <- c("5th","50th","95th")
