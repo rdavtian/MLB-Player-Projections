@@ -171,7 +171,7 @@ clean_hitting_data <- function(data)
            `O-Swing_pct`, `Z-Swing_pct`, Swing_pct, `O-Contact_pct`, `Z-Contact_pct`,
            SwStr_pct, Zone_pct, Contact_pct, Hard_pct) %>% 
     mutate(Season = as.integer(Season)) %>% 
-    rename("O_Swing_pct" = "O-Swing_pct","Z_Swing_pct" = "Z-Swing_pct","Swing_pct" = "Swing_pct", 
+    rename("O_Swing_pct" = "O-Swing_pct","Z_Swing_pct" = "Z-Swing_pct",
            "O_Contact_pct" = "O-Contact_pct", "Z_Contact_pct" = "Z-Contact_pct") %>%
     mutate(G_pct = case_when(Season != 2020 ~ (G / 162) * 100, TRUE ~ (G / 60) * 100),
            PA_G = PA / G,
@@ -188,38 +188,6 @@ clean_hitting_data <- function(data)
            TB = (`1B` + 2*(`2B`) + 3*(`3B`) + 4*(HR)),
            RBI_BIP = (RBI - (HR*1.565) - SF) / (AB - HR - SO),
            R_TOB = (R - HR) / (H + BB + HBP - HR))
-  return(data2)
-}
-
-clean_pitching_data <- function(data)
-{
-  data2 <- data %>%
-    mutate(`Strike%` = round((Strikes / Pitches) * 100,1)) %>% 
-    select(-`#`, -CG, -ShO, -WP, -BK, -Strikes, -Balls, -RS, -Pitches, -BU, -BUH, 
-           BUH_pct, -Starting, -Relieving, -RAR, -Dollars, -WPA, -WPA_minus, 
-           -WPA_plus, -RE24, -REW, -pLI, -inLI, -gmLI, -exLI, -Pulls, -WPA_LI, 
-           -Clutch, -XX_pct, -wKN, -wSF, -wCH, -wCB, -wSL, -wFB, -PO_pct, -KNv,
-           -KN_pct, -SF_pct, -SFv, -IFFB, -IFFB_pct, -IFH, -IFH_pct, -BUH_pct) %>% 
-    mutate(Season = as.integer(Season)) %>% 
-    #rename("K/9" = "K_9", "BB/9" = "BB_9", "K/BB" = "K_BB", "H/9" = "H_9", "HR/9" = "HR_9",
-    #"LOB%" = "LOB_pct", "GB/FB" = "GB_FB", "LD%" = "LD_pct", "GB%" = "GB_pct",
-    #"FB%" = "FB_pct", "HR/FB" = "HR_FB", "FBall%" = "FBall_pct", "SL%" = "SL_pct",
-    #"CB%" = "CB_pct", "CH%" = "CH_pct") %>%
-    mutate(`K_pct` = round(SO / TBF, 3) * 100,
-           `BB_pct` = round(BB / TBF, 3) * 100) %>% 
-    tidyr::replace_na(list(Start_IP = 0, Relief_IP = 0, `FBall_pct` = 0, `SL_pct` = 0,
-                           `CB_pct` = 0, `CH_pct` = 0)) %>% 
-    mutate(Pos_Group = case_when(Start_IP > Relief_IP ~ 'SP',
-                                 Start_IP <= Relief_IP ~ 'RP'),
-           `IP_G` = IP / G,
-           xBABIP = (.128*`FB%`) + (.234*`GB%`) + (0.700*`LD%`),
-           `StartIP/GS` = case_when(GS > 0 ~ Start_IP / GS, TRUE ~ 0),
-           TBF = IP * 2.9 + H + BB + HBP,
-           BIP = GB + FB + LD,
-           `BIP_IP` = BIP / IP,
-           `H_IP` = H / IP,
-           `BB_IP` = BB / IP,
-           `HBP_IP` = HBP / IP)
   return(data2)
 }
 
@@ -545,6 +513,8 @@ train_models <- function(historical_data, y_var, x_vars, model_type, tuneLength,
         ggtitle(paste0("Quantile Random Forest Variable Importance Chart")) + 
         coord_flip() + scale_y_continuous(name="Variable Importance (0-100)") +
         scale_x_discrete(name="") +
+        geom_label(aes(label = round(IncNodePurity, 1)), size = 5, alpha = 0.7) +
+        geom_label(aes(label = round(IncNodePurity, 1)), size = 5.1, alpha = 0.7) +
         theme(plot.title=element_text(hjust=0.5,vjust=0,size=17,face = 'bold'),
               plot.subtitle=element_text(face="plain", hjust= -.015, vjust= .09, colour="#3C3C3C", size = 9)) +
         theme(axis.text.x=element_text(vjust = .5, size=13,colour="#535353",face="bold")) +
@@ -627,7 +597,7 @@ train_models <- function(historical_data, y_var, x_vars, model_type, tuneLength,
   }
 }
 
-plot_past_future_performance <- function(player, past_data, future_data, stat, percent = F)
+plot_hitting_past_future_performance <- function(player, past_data, future_data, stat, percent = F)
 {
   stat2 <- str_replace(stat, "_pct", "%")
   stat2 <- str_replace(stat2, "_plus", "+")
@@ -698,7 +668,7 @@ plot_past_future_performance <- function(player, past_data, future_data, stat, p
   return(plot)
 }
 
-plot_player_comparison <- function(player1, player2, past_data, future_data, stat, percent = F)
+plot_hitting_player_comparison <- function(player1, player2, past_data, future_data, stat, percent = F)
 {
   stat2 <- str_replace(stat, "_pct", "%")
   stat2 <- str_replace(stat2, "_plus", "+")
@@ -770,7 +740,7 @@ plot_player_comparison <- function(player1, player2, past_data, future_data, sta
   return(plot)
 }
 
-print_player_projections <- function(player, quantile, past_data, future_data)
+print_hitting_player_projections <- function(player, quantile, past_data, future_data)
 {
   
   past <- past_data %>% 
@@ -851,7 +821,7 @@ print_player_projections <- function(player, quantile, past_data, future_data)
   }
 }
 
-print_projection_leaderboards <- function(season, future_data, quantile)
+print_hitting_projection_leaderboards <- function(season, future_data, quantile)
 {
   if (quantile == 0.5)
   {

@@ -1,10 +1,8 @@
 future_preds_hitters <- read.csv("https://raw.githubusercontent.com/rdavtian/MLB-Player-Projections/master/Hitting/Data/hitting_projections_data.csv", fileEncoding = 'UTF-8-BOM')
-future_preds_pitchers <- data.frame(Name = c("Carlos Rodon","Logan Webb"))
-
-quantiles <- c("5th", "50th (Median)", "95th")
+future_preds_pitchers <- read.csv("https://raw.githubusercontent.com/rdavtian/MLB-Player-Projections/master/Pitching/Data/pitching_projections_data.csv", fileEncoding = 'UTF-8-BOM')
 current_season <- as.numeric(substr(Sys.Date(), 1, 4)) - 1
 
-plot_past_future_performance <- function(player, past_data, future_data, stat, percent = F)
+plot_hitting_past_future_performance <- function(player, past_data, future_data, stat, percent = F)
 {
   stat2 <- str_replace(stat, "_pct", "%")
   stat2 <- str_replace(stat2, "_plus", "+")
@@ -75,7 +73,7 @@ plot_past_future_performance <- function(player, past_data, future_data, stat, p
   return(plot)
 }
 
-plot_player_comparison <- function(player1, player2, past_data, future_data, stat, percent = F)
+plot_hitting_player_comparison <- function(player1, player2, past_data, future_data, stat, percent = F)
 {
   stat2 <- str_replace(stat, "_pct", "%")
   stat2 <- str_replace(stat2, "_plus", "+")
@@ -147,7 +145,7 @@ plot_player_comparison <- function(player1, player2, past_data, future_data, sta
   return(plot)
 }
 
-print_player_projections <- function(player, quantile, past_data, future_data)
+print_hitting_player_projections <- function(player, quantile, past_data, future_data)
 {
   
   past <- past_data %>% 
@@ -229,7 +227,7 @@ print_player_projections <- function(player, quantile, past_data, future_data)
   }
 }
 
-print_projection_leaderboards <- function(season, future_data, quantile)
+print_hitting_projection_leaderboards <- function(season, future_data, quantile)
 {
   if (quantile == 0.5)
   {

@@ -1,4 +1,4 @@
-set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_pitchers)
+set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_pitchers, past_pitching_data)
 {
   ui <- fluidPage(
     titlePanel(h1("Ruslan's MLB Player Projections", align = "center", 
@@ -85,7 +85,7 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
           }
           if ((input$user_player_type_leaderboards == "Batter") & (season != "Choose...") & (quantile != "Choose..."))
           {
-            output$tbl <- renderDT({datatable(print_projection_leaderboards(season, future_preds_hitters, quantile), rownames= FALSE) %>% DT::formatPercentage(c("BB%","K%"), digits = 1)})
+            output$tbl <- renderDT({datatable(print_hitting_projection_leaderboards(season, future_preds_hitters, quantile), rownames= FALSE) %>% DT::formatPercentage(c("BB%","K%"), digits = 1)})
           } else if ((input$user_player_type_leaderboards == "Pitcher") & (season != "Choose...") & (quantile != "Choose...")) {
             output$tbl <- renderText({"Pitching Leaderboard Projections to be continued: Hittting Leaderboard Projections in Production"})
           }
@@ -109,7 +109,7 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
               } else if (quantile == "95th") {
                 quantile <- 0.95
               }
-              output$tbl <- renderText({print_player_projections(batter, quantile, past_hitting_data, future_preds_hitters)})
+              output$tbl <- renderText({print_hitting_player_projections(batter, quantile, past_hitting_data, future_preds_hitters)})
               htmlOutput("tbl")
               
             } else if ((input$user_display_type_player_proj == "Plot") & (input$user_display_type_player_proj != "Choose...") & (input$user_stat1_player_proj != "Choose...")) {
@@ -117,12 +117,12 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
               if (stat %in% c("K%","BB%"))
               {
                 stat <- str_replace(stat, "%", "_pct")
-                output$plot1 <- renderPlot({plot_past_future_performance(batter, past_hitting_data, future_preds_hitters, stat, percent = T)})
+                output$plot1 <- renderPlot({plot_hitting_past_future_performance(batter, past_hitting_data, future_preds_hitters, stat, percent = T)})
                 plotOutput("plot1", width = "100%") 
               } else {
                 stat <- str_replace(stat, "/162", "_162_G")
                 stat <- str_replace(stat, "\\+", "_plus")
-                output$plot2 <- renderPlot({plot_past_future_performance(batter, past_hitting_data, future_preds_hitters, stat, percent = F)})
+                output$plot2 <- renderPlot({plot_hitting_past_future_performance(batter, past_hitting_data, future_preds_hitters, stat, percent = F)})
                 plotOutput("plot2", width = "125%", height = "400px") 
               }
             }
@@ -174,12 +174,12 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
               if (stat %in% c("K%","BB%"))
               {
                 stat <- str_replace(stat, "%", "_pct")
-                output$plot1 <- renderPlot({plot_player_comparison(batter1, batter2, past_hitting_data, future_preds_hitters, stat, percent = T)})
+                output$plot1 <- renderPlot({plot_hitting_player_comparison(batter1, batter2, past_hitting_data, future_preds_hitters, stat, percent = T)})
                 plotOutput("plot1", width = "100%") 
               } else {
                 stat <- str_replace(stat, "/162", "_162_G")
                 stat <- str_replace(stat, "\\+", "_plus")
-                output$plot2 <- renderPlot({plot_player_comparison(batter1, batter2, past_hitting_data, future_preds_hitters, stat, percent = F)})
+                output$plot2 <- renderPlot({plot_hitting_player_comparison(batter1, batter2, past_hitting_data, future_preds_hitters, stat, percent = F)})
                 plotOutput("plot2", width = "125%", height = "400px") 
               }
             }
