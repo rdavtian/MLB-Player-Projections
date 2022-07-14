@@ -309,6 +309,3 @@ future_preds <- future_preds %>%
 
 setwd("C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Hitting/Data")
 write.csv(future_preds, "hitting_projections_data.csv", row.names = F)
-hitters <- unique(future_preds$Name)
-seasons <- unique(future_preds$Season_Projected)
-quantiles <- c("5th","50th","95th")

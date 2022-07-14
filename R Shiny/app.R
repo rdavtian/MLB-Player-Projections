@@ -10,6 +10,7 @@ library(DT)
 source("./functions.R")
 source("./set_up_shiny.R")
 past_hitting_data <- read.csv("./past_hitting_data.csv", fileEncoding = 'UTF-8-BOM')
+past_pitching_data <- read.csv("./past_pitching_data.csv", fileEncoding = 'UTF-8-BOM')
 
-shiny <- set_up_shiny(future_preds_hitters, past_hitting_data, future_preds_pitchers)
+shiny <- set_up_shiny(future_preds_hitters, past_hitting_data, future_preds_pitchers, past_pitching_data)
 shinyApp(ui = shiny[[1]], server = shiny[[2]])
