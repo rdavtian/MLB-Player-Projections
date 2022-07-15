@@ -38,7 +38,7 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
                                                                                            "ISO","BABIP","AVG","OBP","SLG","OPS","wOBA",
                                                                                            "wRC+","WAR/162"))),
           conditionalPanel(condition = "input.user_display_type_player_proj == 'Plot' & input.user_player_type_player_proj == 'Pitcher'",
-                           selectInput("user_stat2_player_proj","Select Stat",  choices = c("Choose...","IP","ERA","FIP")))
+                           selectInput("user_stat2_player_proj","Select Stat",  choices = c("Choose...","IP","H/9","H")))
         ), 
         conditionalPanel(
           condition = "input.user_output_type == 'user_player_comparison_plot'",
@@ -57,7 +57,7 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
                                           options = list(create = TRUE, createOnBlur = TRUE)),
                            selectizeInput("user_name2_input_pitcher_comp","Select Player 2",  c("Choose...", sort(future_preds_pitchers$Name)),
                                           options = list(create = TRUE, createOnBlur = TRUE)),
-                           selectizeInput("user_stat_input_pitcher_comp","Select Stat",  c("Choose...","IP","ERA","FIP"),
+                           selectizeInput("user_stat_input_pitcher_comp","Select Stat",  c("Choose...","IP","H/9","H"),
                                           options = list(create = TRUE, createOnBlur = TRUE))
                            )
           )
@@ -87,7 +87,7 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
           {
             output$tbl <- renderDT({datatable(print_hitting_projection_leaderboards(season, future_preds_hitters, quantile), rownames= FALSE) %>% DT::formatPercentage(c("BB%","K%"), digits = 1)})
           } else if ((input$user_player_type_leaderboards == "Pitcher") & (season != "Choose...") & (quantile != "Choose...")) {
-            output$tbl <- renderText({"Pitching Leaderboard Projections to be continued: Hittting Leaderboard Projections in Production"})
+            output$tbl <- renderDT({datatable(print_pitching_projection_leaderboards(season, future_preds_pitchers, quantile), rownames= FALSE)})
           }
         }
       } else if (input$user_output_type == "user_player_specific_projections") {
@@ -118,7 +118,7 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
               {
                 stat <- str_replace(stat, "%", "_pct")
                 output$plot1 <- renderPlot({plot_hitting_past_future_performance(batter, past_hitting_data, future_preds_hitters, stat, percent = T)})
-                plotOutput("plot1", width = "100%") 
+                plotOutput("plot1", width = "125%") 
               } else {
                 stat <- str_replace(stat, "/162", "_162_G")
                 stat <- str_replace(stat, "\\+", "_plus")
@@ -143,18 +143,22 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
               } else if (quantile == "95th") {
                 quantile <- 0.95
               }
-              output$tbl <- renderText({"Pitching Player Specific Projections Table to be continued: Hittting Player Specific Projections Table in Production"})
+              output$tbl <- renderText({print_pitching_player_projections(pitcher, quantile, past_pitching_data, future_preds_pitchers)})
+              htmlOutput("tbl")
               
             } else if ((input$user_display_type_player_proj == "Plot") & (input$user_display_type_player_proj != "Choose...") & (input$user_stat2_player_proj != "Choose...")) {
               stat <- input$user_stat2_player_proj
               if (stat %in% c("K%","BB%"))
               {
                 stat <- str_replace(stat, "%", "_pct")
-                output$tbl <- renderText({"Pitching Player Specific Projections Plot to be continued: Hittting Player Specific Projections Plot in Production"})
+                output$plot1 <- renderPlot({plot_pitching_past_future_performance(pitcher, past_pitching_data, future_preds_pitchers, stat, percent = T)})
+                plotOutput("plot1", width = "125%") 
               } else {
                 stat <- str_replace(stat, "/162", "_162_G")
+                stat <- str_replace(stat, "/9", "_9")
                 stat <- str_replace(stat, "\\+", "_plus")
-                output$tbl <- renderText({"Pitching Player Specific Projections Plot to be continued: Hittting Player Specific Projections Plot in Production"})
+                output$plot2 <- renderPlot({plot_pitching_past_future_performance(pitcher, past_pitching_data, future_preds_pitchers, stat, percent = F)})
+                plotOutput("plot2", width = "125%") 
               }
             }
           }
@@ -175,7 +179,7 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
               {
                 stat <- str_replace(stat, "%", "_pct")
                 output$plot1 <- renderPlot({plot_hitting_player_comparison(batter1, batter2, past_hitting_data, future_preds_hitters, stat, percent = T)})
-                plotOutput("plot1", width = "100%") 
+                plotOutput("plot1", width = "125%") 
               } else {
                 stat <- str_replace(stat, "/162", "_162_G")
                 stat <- str_replace(stat, "\\+", "_plus")
@@ -196,11 +200,14 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
               if (stat %in% c("K%","BB%"))
               {
                 stat <- str_replace(stat, "%", "_pct")
-                output$tbl <- renderText({"Pitching Player Projection Comparison Plot to be continued: Hittting Player Projection Comparison Plot in Production"})
+                output$plot1 <- renderPlot({plot_pitching_player_comparison(pitcher1, pitcher2, past_pitching_data, future_preds_pitchers, stat, percent = T)})
+                plotOutput("plot1", width = "125%") 
               } else {
                 stat <- str_replace(stat, "/162", "_162_G")
+                stat <- str_replace(stat, "/9", "_9")
                 stat <- str_replace(stat, "\\+", "_plus")
-                output$tbl <- renderText({"Pitching Player Projection Comparison Plot to be continued: Hittting Player Projection Comparison Plot in Production"})
+                output$plot2 <- renderPlot({plot_pitching_player_comparison(pitcher1, pitcher2, past_pitching_data, future_preds_pitchers, stat, percent = F)})
+                plotOutput("plot2", width = "125%", height = "400px") 
               }
             }
           }

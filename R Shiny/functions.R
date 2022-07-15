@@ -320,6 +320,7 @@ plot_pitching_past_future_performance <- function(player, past_data, future_data
   stat2 <- str_replace(stat, "_pct", "%")
   stat2 <- str_replace(stat2, "_plus", "+")
   stat2 <- str_replace(stat2, "_162_G", " Per 162 GP")
+  stat2 <- str_replace(stat2, "_9", "/9")
   lower <- paste0(stat, "_Projected_Lower")
   upper <- paste0(stat, "_Projected_Upper")
   
@@ -391,6 +392,7 @@ plot_pitching_player_comparison <- function(player1, player2, past_data, future_
   stat2 <- str_replace(stat, "_pct", "%")
   stat2 <- str_replace(stat2, "_plus", "+")
   stat2 <- str_replace(stat2, "_162_G", " Per 162 GP")
+  stat2 <- str_replace(stat2, "_9", "/9")
   lower <- paste0(stat, "_Projected_Lower")
   upper <- paste0(stat, "_Projected_Upper")
   
@@ -530,7 +532,7 @@ print_pitching_player_projections <- function(player, quantile, past_data, futur
   }
 }
 
-print_hitting_projection_leaderboards <- function(season, future_data, quantile)
+print_pitching_projection_leaderboards <- function(season, future_data, quantile)
 {
   if (quantile == 0.5)
   {
