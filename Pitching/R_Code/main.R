@@ -131,7 +131,8 @@ future_preds <- future_preds %>%
          H_Projected = round((H_9_Projected / 9) * IP_Projected),
          H_Projected_Upper = round((H_9_Projected_Upper / 9) * IP_Projected_Upper))
 
-setwd("C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Pitching/Data")
+future_preds <- na.omit(future_preds)
+setwd("C:/Users/rusla/OneDrive/MLBAnalyticsJobs/MLB Player Projections/Pitching/Data")
 write.csv(future_preds, "pitching_projections_data.csv", row.names = F)
 
 ######################################################################################
