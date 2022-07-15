@@ -314,3 +314,146 @@ print_hitting_projection_leaderboards <- function(season, future_data, quantile)
   }
   return(future)
 }
+
+plot_pitching_past_future_performance <- function(player, past_data, future_data, stat, percent = F)
+{
+  stat2 <- str_replace(stat, "_pct", "%")
+  stat2 <- str_replace(stat2, "_plus", "+")
+  stat2 <- str_replace(stat2, "_162_G", " Per 162 GP")
+  lower <- paste0(stat, "_Projected_Lower")
+  upper <- paste0(stat, "_Projected_Upper")
+  
+  past <- past_data %>% 
+    select(Name, Team, Season, all_of(stat)) %>%
+    mutate(Time = "Past") %>% 
+    filter(Name == player)
+  forward <- future_data %>% 
+    select(Name, Team, Season_Projected, paste0(stat, "_Projected_Lower"),
+           paste0(stat, "_Projected"), paste0(stat, "_Projected_Upper")) %>%
+    mutate(Time = "Future") %>% 
+    rename("Season" = "Season_Projected") %>% 
+    filter(Name == player)
+  colnames(forward)[5] <- paste0(stat)
+  data <- bind_rows(past, forward)
+  
+  stat <- rlang::sym(quo_name(enquo(stat)))
+  lower <- rlang::sym(quo_name(enquo(lower)))
+  upper <- rlang::sym(quo_name(enquo(upper)))
+  
+  plot <- ggplot(data, aes(x = Season, y = !! stat)) + 
+    geom_line(aes(col = Time), size = 1.5) + 
+    geom_point(aes(col = Time), size = 3) + xlab('Season') + 
+    geom_line(aes(y = !! lower), colour = 'red', linetype = "twodash", size = 1.5) + 
+    geom_line(aes(y = !! upper), colour = 'red', linetype = "twodash", size = 1.5) + 
+    ggtitle(paste0(unique(data$Name), " Past and Projected ", stat2, 
+                   " with 90% Prediction Interval")) + xlab("Season") + ylab(stat2) +
+    scale_x_continuous(breaks = round(seq(min(data$Season), max(data$Season), by = 2))) +
+    theme(plot.title=element_text(hjust=0.5,vjust=0,size=18,face = 'bold'),
+          plot.subtitle=element_text(face="plain", hjust= -.015, vjust= .09, colour="#3C3C3C", size = 9)) +
+    theme(axis.text.x=element_text(vjust = .5, size=16,colour="#535353",face="bold")) +
+    theme(axis.text.y=element_text(size=16,colour="#535353",face="bold")) +
+    theme(axis.title.y=element_text(size=16,colour="#535353",face="bold",vjust=1.5)) +
+    theme(axis.title.x=element_text(size=16,colour="#535353",face="bold",vjust=0)) +
+    theme(panel.grid.major.y = element_line(color = "#bad2d4", size = .5)) +
+    theme(panel.grid.major.x = element_line(color = "#bdd2d4", size = .5)) +
+    theme(panel.background = element_rect(fill = "white"),
+          legend.title = element_text(face = "bold", size = 16),
+          legend.text = element_text(face = "bold", size = 16),
+          legend.key.height= unit(0.7, 'cm'),
+          legend.key.width= unit(0.7, 'cm')) +
+    theme(strip.text = element_text(face="bold", size=16),
+          strip.background = element_rect(fill="lightblue", colour="black",size=1))
+  
+  if(percent)
+  {
+    plot <- plot + 
+      scalesextra::scale_y_pct(breaks = scales::breaks_extended(10)) + 
+      geom_label(aes(label = paste0(round(!! stat, 1), "%")), size = 4, alpha = 0.7) +
+      geom_label(aes(label = paste0(round(!! stat, 1), "%")), size = 4.1, alpha = 0.7) +
+      geom_label(aes(y = !! upper, label = paste0(round(!! upper, 1), "%")), size = 4, alpha = 0.7) + 
+      geom_label(aes(y = !! upper, label = paste0(round(!! upper, 1), "%")), size = 4.1, alpha = 0.7) + 
+      geom_label(aes(y = !! lower, label = paste0(round(!! lower, 1), "%")), size = 4, alpha = 0.7) + 
+      geom_label(aes(y = !! lower, label = paste0(round(!! lower, 1), "%")), size = 4.1, alpha = 0.7)
+  } else {
+    plot <- plot + scale_y_continuous(breaks = scales::breaks_extended(10)) + 
+      geom_label(aes(label = !! stat), size = 4, alpha = 0.7) +
+      geom_label(aes(label = !! stat), size = 4.1, alpha = 0.7) +
+      geom_label(aes(y = !! upper, label = !! upper), size = 4, alpha = 0.7) + 
+      geom_label(aes(y = !! upper, label = !! upper), size = 4.1, alpha = 0.7) + 
+      geom_label(aes(y = !! lower, label = !! lower), size = 4, alpha = 0.7) + 
+      geom_label(aes(y = !! lower, label = !! lower), size = 4.1, alpha = 0.7)
+  }
+  return(plot)
+}
+
+plot_pitching_player_comparison <- function(player1, player2, past_data, future_data, stat, percent = F)
+{
+  stat2 <- str_replace(stat, "_pct", "%")
+  stat2 <- str_replace(stat2, "_plus", "+")
+  stat2 <- str_replace(stat2, "_162_G", " Per 162 GP")
+  lower <- paste0(stat, "_Projected_Lower")
+  upper <- paste0(stat, "_Projected_Upper")
+  
+  past <- past_data %>% 
+    select(Name, Team, Season, all_of(stat)) %>%
+    mutate(Time = "Past") %>% 
+    filter(Name %in% c(player1, player2))
+  forward <- future_data %>% 
+    select(Name, Team, Season_Projected, paste0(stat, "_Projected_Lower"),
+           paste0(stat, "_Projected"), paste0(stat, "_Projected_Upper")) %>%
+    mutate(Time = "Future") %>% 
+    rename("Season" = "Season_Projected") %>% 
+    filter(Name %in% c(player1, player2))
+  colnames(forward)[5] <- paste0(stat)
+  data <- bind_rows(past, forward)
+  
+  stat <- rlang::sym(quo_name(enquo(stat)))
+  lower <- rlang::sym(quo_name(enquo(lower)))
+  upper <- rlang::sym(quo_name(enquo(upper)))
+  
+  plot <- ggplot(data, aes(x = Season, y = !! stat)) + 
+    geom_line(aes(col = Time), size = 1.5) + 
+    geom_point(aes(col = Time), size = 3) + xlab('Season') + 
+    geom_line(aes(y = !! lower), colour = 'red', linetype = "twodash", size = 1.5) + 
+    geom_line(aes(y = !! upper), colour = 'red', linetype = "twodash", size = 1.5) + 
+    ggtitle(paste0("Past and Projected ", stat2, " with 90% Prediction Interval")) + 
+    xlab("Season") + ylab(stat2) +
+    scale_x_continuous(breaks = round(seq(min(data$Season), max(data$Season), by = 2))) +
+    theme(plot.title=element_text(hjust=0.5,vjust=0,size=18,face = 'bold'),
+          plot.subtitle=element_text(face="plain", hjust= -.015, vjust= .09, colour="#3C3C3C", size = 9)) +
+    theme(axis.text.x=element_text(vjust = .5, size=15,colour="#535353",face="bold")) +
+    theme(axis.text.y=element_text(size=15,colour="#535353",face="bold")) +
+    theme(axis.title.y=element_text(size=15,colour="#535353",face="bold",vjust=1.5)) +
+    theme(axis.title.x=element_text(size=15,colour="#535353",face="bold",vjust=0)) +
+    theme(panel.grid.major.y = element_line(color = "#bad2d4", size = .5)) +
+    theme(panel.grid.major.x = element_line(color = "#bdd2d4", size = .5)) +
+    facet_grid(~ Name, scales = "free") + 
+    theme(panel.background = element_rect(fill = "white"),
+          legend.title = element_text(face = "bold", size = 16),
+          legend.text = element_text(face = "bold", size = 16),
+          legend.key.height= unit(0.7, 'cm'),
+          legend.key.width= unit(0.7, 'cm')) +
+    theme(strip.text = element_text(face="bold", size=16),
+          strip.background = element_rect(fill="lightblue", colour="black",size=1))
+  
+  if(percent)
+  {
+    plot <- plot + 
+      scalesextra::scale_y_pct(breaks = scales::breaks_extended(10)) + 
+      geom_label(aes(label = paste0(round(!! stat, 1), "%")), size = 3, alpha = 0.7) +
+      geom_label(aes(label = paste0(round(!! stat, 1), "%")), size = 3.2, alpha = 0.7) +
+      geom_label(aes(y = !! upper, label = paste0(round(!! upper, 1), "%")), size = 3, alpha = 0.7) + 
+      geom_label(aes(y = !! upper, label = paste0(round(!! upper, 1), "%")), size = 3.2, alpha = 0.7) + 
+      geom_label(aes(y = !! lower, label = paste0(round(!! lower, 1), "%")), size = 3, alpha = 0.7) + 
+      geom_label(aes(y = !! lower, label = paste0(round(!! lower, 1), "%")), size = 3.2, alpha = 0.7)
+  } else {
+    plot <- plot + scale_y_continuous(breaks = scales::breaks_extended(10)) + 
+      geom_label(aes(label = !! stat), size = 3, alpha = 0.7) +
+      geom_label(aes(label = !! stat), size = 3.2, alpha = 0.7) +
+      geom_label(aes(y = !! upper, label = !! upper), size = 3, alpha = 0.7) + 
+      geom_label(aes(y = !! upper, label = !! upper), size = 3.2, alpha = 0.7) + 
+      geom_label(aes(y = !! lower, label = !! lower), size = 3, alpha = 0.7) + 
+      geom_label(aes(y = !! lower, label = !! lower), size = 3.2, alpha = 0.7)
+  }
+  return(plot)
+}
