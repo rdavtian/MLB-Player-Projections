@@ -110,7 +110,7 @@ future_preds <- future_preds %>%
                                         TRUE ~ IP_Projected_Upper),
          IP_Projected_Upper = case_when((Pos_Group_Current == "SP") & (IP_Projected_Upper > 250) ~ 250,
                                         TRUE ~ IP_Projected_Upper)) %>% 
-  select(-IP_G_Projected)
+  select(-IP_G_Projected_Lower, -IP_G_Projected, -IP_G_Projected_Upper)
 #####################################################################################
 # H/9
 x_vars <- c('H_9_Current','H_9_Prior','H_9_Prior_2','LD_pct_Current','GB_pct_Current',
@@ -127,9 +127,9 @@ future_preds <- future_preds %>%
   mutate(H_9_Projected_Lower = round(H_9_Projected_Lower, 2),
          H_9_Projected = round(H_9_Projected, 2),
          H_9_Projected_Upper = round(H_9_Projected_Upper, 2),
-         H_Lower = (H_9_Projected_Lower / 9) * IP_Projected_Lower,
-         H = (H_9_Projected / 9) * IP_Projected,
-         H_Upper = (H_9_Projected_Upper / 9) * IP_Projected_Upper)
+         H_Projected_Lower = round((H_9_Projected_Lower / 9) * IP_Projected_Lower),
+         H_Projected = round((H_9_Projected / 9) * IP_Projected),
+         H_Projected_Upper = round((H_9_Projected_Upper / 9) * IP_Projected_Upper))
 
 setwd("C:/Users/rusla/OneDrive/MLBAnalyticsJobs/Projections/Pitching/Data")
 write.csv(future_preds, "pitching_projections_data.csv", row.names = F)
