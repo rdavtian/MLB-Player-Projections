@@ -38,7 +38,8 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
                                                                                            "ISO","BABIP","AVG","OBP","SLG","OPS","wOBA",
                                                                                            "wRC+","WAR/162"))),
           conditionalPanel(condition = "input.user_display_type_player_proj == 'Plot' & input.user_player_type_player_proj == 'Pitcher'",
-                           selectInput("user_stat2_player_proj","Select Stat",  choices = c("Choose...","IP","H/9","H")))
+                           selectInput("user_stat2_player_proj","Select Stat",  choices = c("Choose...","IP","H","BB","SO","K/9","BB/9","K/BB",
+                                                                                            "K%","BB%","WHIP","BABIP","ERA","FIP","xFIP")))
         ), 
         conditionalPanel(
           condition = "input.user_output_type == 'user_player_comparison_plot'",
@@ -57,7 +58,8 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
                                           options = list(create = TRUE, createOnBlur = TRUE)),
                            selectizeInput("user_name2_input_pitcher_comp","Select Player 2",  c("Choose...", sort(future_preds_pitchers$Name)),
                                           options = list(create = TRUE, createOnBlur = TRUE)),
-                           selectizeInput("user_stat_input_pitcher_comp","Select Stat",  c("Choose...","IP","H/9","H"),
+                           selectizeInput("user_stat_input_pitcher_comp","Select Stat",  c("Choose...","IP","H","BB","SO","K/9","BB/9","K/BB",
+                                                                                           "K%","BB%","WHIP","BABIP","ERA","FIP","xFIP"),
                                           options = list(create = TRUE, createOnBlur = TRUE))
                            )
           )
@@ -87,7 +89,7 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
           {
             output$tbl <- renderDT({datatable(print_hitting_projection_leaderboards(season, future_preds_hitters, quantile), rownames= FALSE) %>% DT::formatPercentage(c("BB%","K%"), digits = 1)})
           } else if ((input$user_player_type_leaderboards == "Pitcher") & (season != "Choose...") & (quantile != "Choose...")) {
-            output$tbl <- renderDT({datatable(print_pitching_projection_leaderboards(season, future_preds_pitchers, quantile), rownames= FALSE)})
+            output$tbl <- renderDT({datatable(print_pitching_projection_leaderboards(season, future_preds_pitchers, quantile), rownames= FALSE) %>% DT::formatPercentage(c("BB%","K%"), digits = 1)})
           }
         }
       } else if (input$user_output_type == "user_player_specific_projections") {
@@ -157,6 +159,7 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
                 stat <- str_replace(stat, "/162", "_162_G")
                 stat <- str_replace(stat, "/9", "_9")
                 stat <- str_replace(stat, "\\+", "_plus")
+                stat <- str_replace(stat, "K/BB", "K_BB")
                 output$plot2 <- renderPlot({plot_pitching_past_future_performance(pitcher, past_pitching_data, future_preds_pitchers, stat, percent = F)})
                 plotOutput("plot2", width = "125%") 
               }
@@ -206,6 +209,7 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
                 stat <- str_replace(stat, "/162", "_162_G")
                 stat <- str_replace(stat, "/9", "_9")
                 stat <- str_replace(stat, "\\+", "_plus")
+                stat <- str_replace(stat, "K/BB", "K_BB")
                 output$plot2 <- renderPlot({plot_pitching_player_comparison(pitcher1, pitcher2, past_pitching_data, future_preds_pitchers, stat, percent = F)})
                 plotOutput("plot2", width = "125%", height = "400px") 
               }

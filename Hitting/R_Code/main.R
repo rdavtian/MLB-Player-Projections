@@ -105,14 +105,10 @@ future_preds <- future_preds %>%
 #####################################################################################
 #K%
 x_vars <- c('K_pct_Current','K_pct_Prior','K_pct_Prior_2','SwStr_pct_Current',
-            'SwStr_pct_Prior','SwStr_pct_Prior_2','Swing_pct_Current','Swing_pct_Prior',
-            'Swing_pct_Prior_2','Contact_pct_Current','Contact_pct_Prior',
-            'Contact_pct_Prior_2','Zone_pct_Current','Zone_pct_Prior','Zone_pct_Prior_2',
+            'Swing_pct_Current','Contact_pct_Current','Zone_pct_Current',
             'O_Contact_pct_Current','Z_Contact_pct_Current','Z_Swing_pct_Current',
-            'O_Swing_pct_Current','O_Contact_pct_Prior','Z_Contact_pct_Prior',
-            'Z_Swing_pct_Prior','O_Swing_pct_Prior','O_Contact_pct_Prior_2',
-            'Z_Contact_pct_Prior_2','Z_Swing_pct_Prior_2','O_Swing_pct_Prior_2',
-            "Age_Projected",'MLB_Service_Projected','Pos_Group_Current','PA_Harmonic')
+            'O_Swing_pct_Current',"Age_Projected",'MLB_Service_Projected',
+            'Pos_Group_Current','PA_Harmonic')
 future_preds_k <- train_models(historical, 'K_pct_Projected', x_vars, "rqlasso", 5, 1:5)
 future_preds <- future_preds %>%
   left_join(future_preds_k[[1]] %>% select(Name, Team, Season_Projected, K_pct_Projected_Lower,
@@ -124,14 +120,10 @@ future_preds <- future_preds %>%
 #####################################################################################
 #BB%
 x_vars <- c('BB_pct_Current','BB_pct_Prior','BB_pct_Prior_2','SwStr_pct_Current',
-            'SwStr_pct_Prior','SwStr_pct_Prior_2','Swing_pct_Current','Swing_pct_Prior',
-            'Swing_pct_Prior_2','Contact_pct_Current','Contact_pct_Prior',
-            'Contact_pct_Prior_2','Zone_pct_Current','Zone_pct_Prior','Zone_pct_Prior_2',
+            'Swing_pct_Current','Contact_pct_Current','Zone_pct_Current',
             'O_Contact_pct_Current','Z_Contact_pct_Current','Z_Swing_pct_Current',
-            'O_Swing_pct_Current','O_Contact_pct_Prior','Z_Contact_pct_Prior',
-            'Z_Swing_pct_Prior','O_Swing_pct_Prior','O_Contact_pct_Prior_2',
-            'Z_Contact_pct_Prior_2','Z_Swing_pct_Prior_2','O_Swing_pct_Prior_2',
-            "Age_Projected",'MLB_Service_Projected','Pos_Group_Current','PA_Harmonic')
+            'O_Swing_pct_Current',"Age_Projected",'MLB_Service_Projected',
+            'Pos_Group_Current','PA_Harmonic')
 future_preds_bb <- train_models(historical, 'BB_pct_Projected', x_vars, "rqlasso", 5, 1:5)
 future_preds <- future_preds %>%
   left_join(future_preds_bb[[1]] %>% select(Name, Team, Season_Projected, BB_pct_Projected_Lower,
@@ -143,17 +135,11 @@ future_preds <- future_preds %>%
 ###################################################################################
 # AVG 
 x_vars <- c('AVG_Current','AVG_Prior','AVG_Prior_2','FB_pct_Current',
-            'FB_pct_Prior','FB_pct_Prior_2','GB_pct_Current','GB_pct_Prior',
-            'GB_pct_Prior_2','LD_pct_Current','LD_pct_Prior','LD_pct_Prior_2',
-            'Hard_pct_Current','Hard_pct_Prior','Hard_pct_Prior_2','SwStr_pct_Current',
-            'SwStr_pct_Prior','SwStr_pct_Prior_2','Swing_pct_Current','Swing_pct_Prior',
-            'Swing_pct_Prior_2','Contact_pct_Current','Contact_pct_Prior',
-            'Contact_pct_Prior_2','Zone_pct_Current','Zone_pct_Prior','Zone_pct_Prior_2',
+            'GB_pct_Current','LD_pct_Current','Hard_pct_Current','SwStr_pct_Current',
+            'Swing_pct_Current','Contact_pct_Current','Zone_pct_Current',
             'O_Contact_pct_Current','Z_Contact_pct_Current','Z_Swing_pct_Current',
-            'O_Swing_pct_Current','O_Contact_pct_Prior','Z_Contact_pct_Prior',
-            'Z_Swing_pct_Prior','O_Swing_pct_Prior','O_Contact_pct_Prior_2',
-            'Z_Contact_pct_Prior_2','Z_Swing_pct_Prior_2','O_Swing_pct_Prior_2',
-            "Age_Projected",'MLB_Service_Projected','Pos_Group_Current','PA_Harmonic')
+            'O_Swing_pct_Current',"Age_Projected",'MLB_Service_Projected',
+            'Pos_Group_Current','PA_Harmonic')
 future_preds_avg <- train_models(historical, 'AVG_Projected', x_vars, "rqlasso", 5, 1:5)
 future_preds <- future_preds %>%
   left_join(future_preds_avg[[1]] %>% select(Name, Team, Season_Projected, AVG_Projected_Lower,
@@ -165,17 +151,11 @@ future_preds <- future_preds %>%
 ###################################################################################
 # OBP
 x_vars <- c('OBP_Current','OBP_Prior','OBP_Prior_2','FB_pct_Current',
-            'FB_pct_Prior','FB_pct_Prior_2','GB_pct_Current','GB_pct_Prior',
-            'GB_pct_Prior_2','LD_pct_Current','LD_pct_Prior','LD_pct_Prior_2',
-            'Hard_pct_Current','Hard_pct_Prior','Hard_pct_Prior_2','SwStr_pct_Current',
-            'SwStr_pct_Prior','SwStr_pct_Prior_2','Swing_pct_Current','Swing_pct_Prior',
-            'Swing_pct_Prior_2','Contact_pct_Current','Contact_pct_Prior',
-            'Contact_pct_Prior_2','Zone_pct_Current','Zone_pct_Prior','Zone_pct_Prior_2',
+            'GB_pct_Current','LD_pct_Current','Hard_pct_Current','SwStr_pct_Current',
+            'Swing_pct_Current','Contact_pct_Current','Zone_pct_Current',
             'O_Contact_pct_Current','Z_Contact_pct_Current','Z_Swing_pct_Current',
-            'O_Swing_pct_Current','O_Contact_pct_Prior','Z_Contact_pct_Prior',
-            'Z_Swing_pct_Prior','O_Swing_pct_Prior','O_Contact_pct_Prior_2',
-            'Z_Contact_pct_Prior_2','Z_Swing_pct_Prior_2','O_Swing_pct_Prior_2',
-            "Age_Projected",'MLB_Service_Projected','Pos_Group_Current','PA_Harmonic')
+            'O_Swing_pct_Current',"Age_Projected",'MLB_Service_Projected',
+            'Pos_Group_Current','PA_Harmonic')
 future_preds_obp <- train_models(historical, 'OBP_Projected', x_vars, "rqlasso", 5, 1:5)
 future_preds <- future_preds %>%
   left_join(future_preds_obp[[1]] %>% select(Name, Team, Season_Projected, OBP_Projected_Lower,
@@ -187,17 +167,11 @@ future_preds <- future_preds %>%
 ###################################################################################
 # SLG
 x_vars <- c('SLG_Current','SLG_Prior','SLG_Prior_2','FB_pct_Current',
-            'FB_pct_Prior','FB_pct_Prior_2','GB_pct_Current','GB_pct_Prior',
-            'GB_pct_Prior_2','LD_pct_Current','LD_pct_Prior','LD_pct_Prior_2',
-            'Hard_pct_Current','Hard_pct_Prior','Hard_pct_Prior_2','SwStr_pct_Current',
-            'SwStr_pct_Prior','SwStr_pct_Prior_2','Swing_pct_Current','Swing_pct_Prior',
-            'Swing_pct_Prior_2','Contact_pct_Current','Contact_pct_Prior',
-            'Contact_pct_Prior_2','Zone_pct_Current','Zone_pct_Prior','Zone_pct_Prior_2',
+            'GB_pct_Current','LD_pct_Current','Hard_pct_Current','SwStr_pct_Current',
+            'Swing_pct_Current','Contact_pct_Current','Zone_pct_Current',
             'O_Contact_pct_Current','Z_Contact_pct_Current','Z_Swing_pct_Current',
-            'O_Swing_pct_Current','O_Contact_pct_Prior','Z_Contact_pct_Prior',
-            'Z_Swing_pct_Prior','O_Swing_pct_Prior','O_Contact_pct_Prior_2',
-            'Z_Contact_pct_Prior_2','Z_Swing_pct_Prior_2','O_Swing_pct_Prior_2',
-            "Age_Projected",'MLB_Service_Projected','Pos_Group_Current','PA_Harmonic')
+            'O_Swing_pct_Current',"Age_Projected",'MLB_Service_Projected',
+            'Pos_Group_Current','PA_Harmonic')
 future_preds_slg <- train_models(historical, 'SLG_Projected', x_vars, "rqlasso", 5, 1:5)
 future_preds <- future_preds %>%
   left_join(future_preds_slg[[1]] %>% select(Name, Team, Season_Projected, SLG_Projected_Lower,
@@ -209,17 +183,11 @@ future_preds <- future_preds %>%
 ###################################################################################
 # wOBA
 x_vars <- c('wOBA_Current','wOBA_Prior','wOBA_Prior_2','FB_pct_Current',
-            'FB_pct_Prior','FB_pct_Prior_2','GB_pct_Current','GB_pct_Prior',
-            'GB_pct_Prior_2','LD_pct_Current','LD_pct_Prior','LD_pct_Prior_2',
-            'Hard_pct_Current','Hard_pct_Prior','Hard_pct_Prior_2','SwStr_pct_Current',
-            'SwStr_pct_Prior','SwStr_pct_Prior_2','Swing_pct_Current','Swing_pct_Prior',
-            'Swing_pct_Prior_2','Contact_pct_Current','Contact_pct_Prior',
-            'Contact_pct_Prior_2','Zone_pct_Current','Zone_pct_Prior','Zone_pct_Prior_2',
+            'GB_pct_Current','LD_pct_Current','Hard_pct_Current','SwStr_pct_Current',
+            'Swing_pct_Current','Contact_pct_Current','Zone_pct_Current',
             'O_Contact_pct_Current','Z_Contact_pct_Current','Z_Swing_pct_Current',
-            'O_Swing_pct_Current','O_Contact_pct_Prior','Z_Contact_pct_Prior',
-            'Z_Swing_pct_Prior','O_Swing_pct_Prior','O_Contact_pct_Prior_2',
-            'Z_Contact_pct_Prior_2','Z_Swing_pct_Prior_2','O_Swing_pct_Prior_2',
-            "Age_Projected",'MLB_Service_Projected','Pos_Group_Current','PA_Harmonic')
+            'O_Swing_pct_Current',"Age_Projected",'MLB_Service_Projected',
+            'Pos_Group_Current','PA_Harmonic')
 future_preds_woba <- train_models(historical, 'wOBA_Projected', x_vars, "rqlasso", 5, 1:5)
 future_preds <- future_preds %>%
   left_join(future_preds_woba[[1]] %>% select(Name, Team, Season_Projected, wOBA_Projected_Lower,
@@ -231,17 +199,11 @@ future_preds <- future_preds %>%
 ###################################################################################
 # BABIP
 x_vars <- c('BABIP_Current','BABIP_Prior','BABIP_Prior_2','FB_pct_Current',
-            'FB_pct_Prior','FB_pct_Prior_2','GB_pct_Current','GB_pct_Prior',
-            'GB_pct_Prior_2','LD_pct_Current','LD_pct_Prior','LD_pct_Prior_2',
-            'Hard_pct_Current','Hard_pct_Prior','Hard_pct_Prior_2','SwStr_pct_Current',
-            'SwStr_pct_Prior','SwStr_pct_Prior_2','Swing_pct_Current','Swing_pct_Prior',
-            'Swing_pct_Prior_2','Contact_pct_Current','Contact_pct_Prior',
-            'Contact_pct_Prior_2','Zone_pct_Current','Zone_pct_Prior','Zone_pct_Prior_2',
+            'GB_pct_Current','LD_pct_Current','Hard_pct_Current','SwStr_pct_Current',
+            'Swing_pct_Current','Contact_pct_Current','Zone_pct_Current',
             'O_Contact_pct_Current','Z_Contact_pct_Current','Z_Swing_pct_Current',
-            'O_Swing_pct_Current','O_Contact_pct_Prior','Z_Contact_pct_Prior',
-            'Z_Swing_pct_Prior','O_Swing_pct_Prior','O_Contact_pct_Prior_2',
-            'Z_Contact_pct_Prior_2','Z_Swing_pct_Prior_2','O_Swing_pct_Prior_2',
-            "Age_Projected",'MLB_Service_Projected','Pos_Group_Current','PA_Harmonic')
+            'O_Swing_pct_Current',"Age_Projected",'MLB_Service_Projected',
+            'Pos_Group_Current','PA_Harmonic')
 future_preds_babip <- train_models(historical, 'BABIP_Projected', x_vars, "rqlasso", 5, 1:5)
 future_preds <- future_preds %>%
   left_join(future_preds_babip[[1]] %>% select(Name, Team, Season_Projected, BABIP_Projected_Lower,
@@ -253,17 +215,11 @@ future_preds <- future_preds %>%
 ###########################################################################################
 # wRC+
 x_vars <- c('wRC_plus_Current','wRC_plus_Prior','wRC_plus_Prior_2','FB_pct_Current',
-            'FB_pct_Prior','FB_pct_Prior_2','GB_pct_Current','GB_pct_Prior',
-            'GB_pct_Prior_2','LD_pct_Current','LD_pct_Prior','LD_pct_Prior_2',
-            'Hard_pct_Current','Hard_pct_Prior','Hard_pct_Prior_2','SwStr_pct_Current',
-            'SwStr_pct_Prior','SwStr_pct_Prior_2','Swing_pct_Current','Swing_pct_Prior',
-            'Swing_pct_Prior_2','Contact_pct_Current','Contact_pct_Prior',
-            'Contact_pct_Prior_2','Zone_pct_Current','Zone_pct_Prior','Zone_pct_Prior_2',
+            'GB_pct_Current','LD_pct_Current','Hard_pct_Current','SwStr_pct_Current',
+            'Swing_pct_Current','Contact_pct_Current','Zone_pct_Current',
             'O_Contact_pct_Current','Z_Contact_pct_Current','Z_Swing_pct_Current',
-            'O_Swing_pct_Current','O_Contact_pct_Prior','Z_Contact_pct_Prior',
-            'Z_Swing_pct_Prior','O_Swing_pct_Prior','O_Contact_pct_Prior_2',
-            'Z_Contact_pct_Prior_2','Z_Swing_pct_Prior_2','O_Swing_pct_Prior_2',
-            "Age_Projected",'MLB_Service_Projected', 'Pos_Group_Current','PA_Harmonic')
+            'O_Swing_pct_Current',"Age_Projected",'MLB_Service_Projected', 
+            'Pos_Group_Current','PA_Harmonic')
 future_preds_wrc <- train_models(historical, 'wRC_plus_Projected', x_vars, "rqlasso", 5, 1:5)
 future_preds <- future_preds %>%
   left_join(future_preds_wrc[[1]] %>% select(Name, Team, Season_Projected, wRC_plus_Projected_Lower,

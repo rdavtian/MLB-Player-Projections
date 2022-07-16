@@ -465,25 +465,27 @@ print_pitching_player_projections <- function(player, quantile, past_data, futur
   
   past <- past_data %>% 
     filter(Name == player) %>% 
-    select(Season, Age, G, GS, IP, H_9, H) %>%
-    #mutate(BB_pct = paste0(BB_pct, "%"), K_pct = paste0(K_pct, "%")) %>%
-    rename("H/9" = "H_9")
-  #rename("BB%" = "BB_pct", "K%" = "K_pct", "BB/K" = "BB_K", "wRC+" = "wRC_plus",
-  #"WAR/162" = "WAR_162_G")
+    select(Season, Age, G, GS, IP, H, BB, SO, K_9, BB_9, K_BB, K_pct, BB_pct, 
+           WHIP, BABIP, ERA, FIP, xFIP) %>%
+    mutate(BB_pct = paste0(BB_pct, "%"), K_pct = paste0(K_pct, "%")) %>%
+    rename("K/9" = "K_9", "BB/9" = "BB_9", "K/BB" = "K_BB",
+           "BB%" = "BB_pct", "K%" = "K_pct")
   
   if (quantile == 0.5)
   {
     future <- future_data %>% 
       filter(Name == player) %>%
       select(Season_Projected, Age_Projected, G_Projected, GS_Projected, 
-             IP_Projected, H_9_Projected, H_Projected) #%>%
-    #mutate(BB_pct_Projected = paste0(BB_pct_Projected, "%"),
-    #K_pct_Projected = paste0(K_pct_Projected, "%"))
+             IP_Projected, H_Projected, BB_Projected, SO_Projected, K_9_Projected, 
+             BB_9_Projected, K_BB_Projected, K_pct_Projected, BB_pct_Projected,
+             WHIP_Projected, BABIP_Projected, ERA_Projected, FIP_Projected, xFIP_Projected) %>%
+    mutate(BB_pct_Projected = paste0(BB_pct_Projected, "%"),
+           K_pct_Projected = paste0(K_pct_Projected, "%"))
     colnames(future) <- str_replace(colnames(future), "_Projected", "")
     colnames(future) <- str_replace(colnames(future), "_pct", "%")
     colnames(future) <- str_replace(colnames(future), "_plus", "+")
-    future <- future %>% rename("H/9" = "H_9")
-    #future <- future %>% rename("BB/K" = "BB_K", "WAR/162" = "WAR_162_G")
+    colnames(future) <- str_replace(colnames(future), "_9", "/9")
+    future <- future %>% rename("K/BB" = "K_BB")
     tab <- rbind(past, future)
     kable(tab, rownames = F) %>% 
       kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
@@ -495,15 +497,19 @@ print_pitching_player_projections <- function(player, quantile, past_data, futur
     future <- future_data %>% 
       filter(Name == player) %>%
       select(Season_Projected, Age_Projected, G_Projected, GS_Projected, 
-             IP_Projected_Lower, H_9_Projected_Lower, H_Projected_Lower) #%>% 
-    #mutate(BB_pct_Projected_Lower = paste0(BB_pct_Projected_Lower, "%"),
-    #K_pct_Projected_Lower = paste0(K_pct_Projected_Lower, "%"))
+             IP_Projected_Lower, H_Projected_Lower, BB_Projected_Lower,
+             SO_Projected_Lower, K_9_Projected_Lower, BB_9_Projected_Lower, 
+             K_BB_Projected_Lower, K_pct_Projected_Lower, BB_pct_Projected_Lower,
+             WHIP_Projected_Lower, BABIP_Projected_Lower, ERA_Projected_Lower, 
+             FIP_Projected_Lower, xFIP_Projected_Lower) %>% 
+    mutate(BB_pct_Projected_Lower = paste0(BB_pct_Projected_Lower, "%"),
+           K_pct_Projected_Lower = paste0(K_pct_Projected_Lower, "%"))
     colnames(future) <- str_replace(colnames(future), "_Projected_Lower", "")
     colnames(future) <- str_replace(colnames(future), "_Projected", "")
     colnames(future) <- str_replace(colnames(future), "_pct", "%")
     colnames(future) <- str_replace(colnames(future), "_plus", "+")
-    future <- future %>% rename("H/9" = "H_9")
-    #future <- future %>% rename("BB/K" = "BB_K", "WAR/162" = "WAR_162_G")
+    colnames(future) <- str_replace(colnames(future), "_9", "/9")
+    future <- future %>% rename("K/BB" = "K_BB")
     tab <- rbind(past, future)
     kable(tab, rownames = F) %>% 
       kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
@@ -514,15 +520,19 @@ print_pitching_player_projections <- function(player, quantile, past_data, futur
     future <- future_data %>% 
       filter(Name == player) %>%
       select(Season_Projected, Age_Projected, G_Projected, GS_Projected, 
-             IP_Projected_Upper, H_9_Projected_Upper, H_Projected_Upper) #%>% 
-    #mutate(BB_pct_Projected_Upper = paste0(BB_pct_Projected_Upper, "%"),
-    #K_pct_Projected_Upper = paste0(K_pct_Projected_Upper, "%"))
+             IP_Projected_Upper, H_Projected_Upper, BB_Projected_Upper,
+             SO_Projected_Upper, K_9_Projected_Upper, BB_9_Projected_Upper, 
+             K_BB_Projected_Upper, K_pct_Projected_Upper, BB_pct_Projected_Upper,
+             WHIP_Projected_Upper, BABIP_Projected_Upper, ERA_Projected_Upper, 
+             FIP_Projected_Upper, xFIP_Projected_Upper) %>% 
+    mutate(BB_pct_Projected_Upper = paste0(BB_pct_Projected_Upper, "%"),
+           K_pct_Projected_Upper = paste0(K_pct_Projected_Upper, "%"))
     colnames(future) <- str_replace(colnames(future), "_Projected_Upper", "")
     colnames(future) <- str_replace(colnames(future), "_Projected", "")
     colnames(future) <- str_replace(colnames(future), "_pct", "%")
     colnames(future) <- str_replace(colnames(future), "_plus", "+")
-    future <- future %>% rename("H/9" = "H_9")
-    #future <- future %>% rename("BB/K" = "BB_K", "WAR/162" = "WAR_162_G")
+    colnames(future) <- str_replace(colnames(future), "_9", "/9")
+    future <- future %>% rename("K/BB" = "K_BB")
     tab <- rbind(past, future)
     kable(tab, rownames = F) %>% 
       kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
@@ -538,41 +548,51 @@ print_pitching_projection_leaderboards <- function(season, future_data, quantile
   {
     future <- future_data %>% 
       filter(Season_Projected == season) %>%
-      select(Name, Season_Projected, Age_Projected, G_Projected, GS_Projected, 
-             IP_Projected, H_9_Projected, H_Projected) #%>% 
-    #mutate(BB_pct_Projected = BB_pct_Projected / 100,
-    #K_pct_Projected = K_pct_Projected / 100)
+      select(Season_Projected, Age_Projected, G_Projected, GS_Projected, 
+             IP_Projected, H_Projected, BB_Projected, SO_Projected, K_9_Projected, 
+             BB_9_Projected, K_BB_Projected, K_pct_Projected, BB_pct_Projected,
+             WHIP_Projected, BABIP_Projected, ERA_Projected, FIP_Projected, xFIP_Projected) %>%
+      mutate(BB_pct_Projected = paste0(BB_pct_Projected, "%"),
+             K_pct_Projected = paste0(K_pct_Projected, "%"))
     colnames(future) <- str_replace(colnames(future), "_Projected", "")
     colnames(future) <- str_replace(colnames(future), "_pct", "%")
     colnames(future) <- str_replace(colnames(future), "_plus", "+")
-    future <- future %>% rename("H/9" = "H_9")
-    #future <- future %>% rename("BB/K" = "BB_K", "WAR/162" = "WAR_162_G")
+    colnames(future) <- str_replace(colnames(future), "_9", "/9")
+    future <- future %>% rename("K/BB" = "K_BB")
   }  else if (quantile == 0.05) {
     future <- future_data %>% 
       filter(Season_Projected == season) %>%
-      select(Name, Season_Projected, Age_Projected, G_Projected, GS_Projected, 
-             IP_Projected_Lower, H_9_Projected_Lower, H_Projected_Lower) #%>% 
-    #mutate(BB_pct_Projected_Lower = BB_pct_Projected_Lower / 100,
-    #K_pct_Projected_Lower = K_pct_Projected_Lower / 100)
+      select(Season_Projected, Age_Projected, G_Projected, GS_Projected, 
+             IP_Projected_Lower, H_Projected_Lower, BB_Projected_Lower,
+             SO_Projected_Lower, K_9_Projected_Lower, BB_9_Projected_Lower, 
+             K_BB_Projected_Lower, K_pct_Projected_Lower, BB_pct_Projected_Lower,
+             WHIP_Projected_Lower, BABIP_Projected_Lower, ERA_Projected_Lower, 
+             FIP_Projected_Lower, xFIP_Projected_Lower) %>% 
+      mutate(BB_pct_Projected_Lower = paste0(BB_pct_Projected_Lower, "%"),
+             K_pct_Projected_Lower = paste0(K_pct_Projected_Lower, "%"))
     colnames(future) <- str_replace(colnames(future), "_Projected_Lower", "")
     colnames(future) <- str_replace(colnames(future), "_Projected", "")
     colnames(future) <- str_replace(colnames(future), "_pct", "%")
     colnames(future) <- str_replace(colnames(future), "_plus", "+")
-    future <- future %>% rename("H/9" = "H_9")
-    #future <- future %>% rename("BB/K" = "BB_K", "WAR/162" = "WAR_162_G")
+    colnames(future) <- str_replace(colnames(future), "_9", "/9")
+    future <- future %>% rename("K/BB" = "K_BB")
   } else if (quantile == 0.95) {
     future <- future_data %>% 
       filter(Season_Projected == season) %>%
-      select(Name, Season_Projected, Age_Projected, G_Projected, GS_Projected, 
-             IP_Projected_Upper, H_9_Projected_Upper, H_Projected_Upper) #%>% 
-    #mutate(BB_pct_Projected_Upper = BB_pct_Projected_Upper / 100,
-    #K_pct_Projected_Upper = K_pct_Projected_Upper / 100)
+      select(Season_Projected, Age_Projected, G_Projected, GS_Projected, 
+             IP_Projected_Upper, H_Projected_Upper, BB_Projected_Upper,
+             SO_Projected_Upper, K_9_Projected_Upper, BB_9_Projected_Upper, 
+             K_BB_Projected_Upper, K_pct_Projected_Upper, BB_pct_Projected_Upper,
+             WHIP_Projected_Upper, BABIP_Projected_Upper, ERA_Projected_Upper, 
+             FIP_Projected_Upper, xFIP_Projected_Upper) %>% 
+      mutate(BB_pct_Projected_Upper = paste0(BB_pct_Projected_Upper, "%"),
+             K_pct_Projected_Upper = paste0(K_pct_Projected_Upper, "%"))
     colnames(future) <- str_replace(colnames(future), "_Projected_Upper", "")
     colnames(future) <- str_replace(colnames(future), "_Projected", "")
     colnames(future) <- str_replace(colnames(future), "_pct", "%")
     colnames(future) <- str_replace(colnames(future), "_plus", "+")
-    future <- future %>% rename("H/9" = "H_9")
-    #future <- future %>% rename("BB/K" = "BB_K", "WAR/162" = "WAR_162_G")
+    colnames(future) <- str_replace(colnames(future), "_9", "/9")
+    future <- future %>% rename("K/BB" = "K_BB")
   }
   return(future)
 }
