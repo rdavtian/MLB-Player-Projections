@@ -191,6 +191,8 @@ clean_pitching_data <- function(data)
            #xBABIP = (.128*`FB%`) + (.234*`GB%`) + (0.700*`LD%`),
            StartIP_GS = case_when(GS > 0 ~ round(Start_IP / GS,3), TRUE ~ 0),
            BIP = GB + FB + LD,
+           TBF_IP = round(TBF / IP, 3),
+           TBF_G = round(TBF / G, 3),
            BIP_IP = round(BIP / IP, 3),
            H_IP = round(H / IP, 3),
            BB_IP = round(BB / IP, 3),

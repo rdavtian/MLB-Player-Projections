@@ -26,7 +26,7 @@ teamnames <- baseballr::teams_lu_table %>%
   rename("Team" = "abbreviation") %>% 
   add_row(teamName = "Expos", Team = "MON") %>% 
   mutate(League = case_when(league.name == "American League" ~ "AL",
-                            league.name == "National League" ~ "AL",
+                            league.name == "National League" ~ "NL",
                             TRUE ~ "NL")) %>% select(-league.name) %>% 
   add_row(Team = "FLA", League = "NL") %>% 
   add_row(Team = "WSN", League = "NL") %>% 
@@ -55,7 +55,7 @@ pitching_stats <- c('G','GS','G_pct','GS_pct','IP','ERA','tERA','FIP','xFIP','WA
                     'WHIP','BABIP','SO','K_9','K_pct','BB','BB_9','BB_pct','K_BB','H',
                     'H_9','HR','HR_9','LD_pct','GB_pct','FB_pct','HR_FB','Strike_pct',
                     'FBv','FBall_pct','O_Swing_pct','Z_Swing_pct','Swing_pct',
-                    'O_Contact_pct','Z_Contact_pct','Contact_pct','Zone_pct',
+                    'O_Contact_pct','Z_Contact_pct','Contact_pct','Zone_pct','TBF_G',
                     'F_Strike_pct','SwStr_pct','IP_G','StartIP_GS', 'BIP_IP','H_IP')
 pitching_full_data <- merge_pitching_stats(pitching3, pitching_stats)
 
@@ -112,6 +112,65 @@ future_preds <- future_preds %>%
                                         TRUE ~ IP_Projected_Upper)) %>% 
   select(-IP_G_Projected_Lower, -IP_G_Projected, -IP_G_Projected_Upper)
 #####################################################################################
+# TBF
+x_vars <- c('TBF_G_Current','TBF_G_Prior','TBF_G_Prior_2',"Age_Projected",
+            'MLB_Service_Projected','Pos_Group_Current','Num_Pitches_Harmonic')
+future_preds_tbf <- train_models(historical, 'TBF_G_Projected', x_vars, "rqlasso", 3, 1:5)
+future_preds <- future_preds %>%
+  left_join(future_preds_tbf[[1]] %>% select(Name, Team, Season_Projected, TBF_G_Projected_Lower,
+                                           TBF_G_Projected, TBF_G_Projected_Upper), 
+            by = c("Name","Team","Season_Projected")) %>% 
+  mutate(TBF_Projected_Lower = round(TBF_G_Projected_Lower * G_Projected),
+         TBF_Projected = round(TBF_G_Projected * G_Projected),
+         TBF_Projected_Upper = round(TBF_G_Projected_Upper * G_Projected)) %>% 
+  select(-TBF_G_Projected_Lower, -TBF_G_Projected, -TBF_G_Projected_Upper)
+
+#######################################################################################
+# K%
+x_vars <- c('K_pct_Current','K_pct_Prior','K_pct_Prior_2','SwStr_pct_Current',
+            'Swing_pct_Current','Contact_pct_Current','Zone_pct_Current',
+            'O_Contact_pct_Current','Z_Contact_pct_Current','Z_Swing_pct_Current',
+            'O_Swing_pct_Current',"Age_Projected",'MLB_Service_Projected',
+            'Pos_Group_Current','Num_Pitches_Harmonic')
+future_preds_k <- train_models(historical, 'K_pct_Projected', x_vars, "rqlasso", 5, 1:5)
+future_preds <- future_preds %>%
+  left_join(future_preds_k[[1]] %>% select(Name, Team, Season_Projected, K_pct_Projected_Lower,
+                                           K_pct_Projected, K_pct_Projected_Upper), 
+            by = c("Name","Team","Season_Projected")) %>% 
+  mutate(K_pct_Projected_Lower = round(K_pct_Projected_Lower, 1),
+         K_pct_Projected = round(K_pct_Projected, 1),
+         K_pct_Projected_Upper = round(K_pct_Projected_Upper, 1),
+         SO_Projected_Lower = round(TBF_Projected * (K_pct_Projected_Lower / 100)),
+         SO_Projected = round(TBF_Projected * (K_pct_Projected / 100)),
+         SO_Projected_Upper = round(TBF_Projected * (K_pct_Projected_Upper / 100)),
+         K_9_Projected_Lower = round((SO_Projected_Lower / IP_Projected) * 9, 1),
+         K_9_Projected = round((SO_Projected / IP_Projected) * 9, 1),
+         K_9_Projected_Upper = round((SO_Projected_Upper / IP_Projected) * 9, 1))
+##################################################################################
+# BB%
+x_vars <- c('BB_pct_Current','BB_pct_Prior','BB_pct_Prior_2','SwStr_pct_Current',
+            'Swing_pct_Current','Contact_pct_Current','Zone_pct_Current',
+            'O_Contact_pct_Current','Z_Contact_pct_Current','Z_Swing_pct_Current',
+            'O_Swing_pct_Current',"Age_Projected",'MLB_Service_Projected',
+            'Pos_Group_Current','Num_Pitches_Harmonic')
+future_preds_bb <- train_models(historical, 'BB_pct_Projected', x_vars, "rqlasso", 5, 1:5)
+future_preds <- future_preds %>%
+  left_join(future_preds_bb[[1]] %>% select(Name, Team, Season_Projected, BB_pct_Projected_Lower,
+                                            BB_pct_Projected, BB_pct_Projected_Upper), 
+            by = c("Name","Team","Season_Projected")) %>% 
+  mutate(BB_pct_Projected_Lower = round(BB_pct_Projected_Lower, 1),
+         BB_pct_Projected = round(BB_pct_Projected, 1),
+         BB_pct_Projected_Upper = round(BB_pct_Projected_Upper, 1),
+         BB_Projected_Lower = round(TBF_Projected * (BB_pct_Projected_Lower / 100)),
+         BB_Projected = round(TBF_Projected * (BB_pct_Projected / 100)),
+         BB_Projected_Upper = round(TBF_Projected * (BB_pct_Projected_Upper / 100)),
+         BB_9_Projected_Lower = round((BB_Projected_Lower / IP_Projected) * 9, 1),
+         BB_9_Projected = round((BB_Projected / IP_Projected) * 9, 1),
+         BB_9_Projected_Upper = round((BB_Projected_Upper / IP_Projected) * 9, 1),
+         K_BB_Projected_Lower = round(SO_Projected_Lower / BB_Projected_Lower, 2),
+         K_BB_Projected = round(SO_Projected / BB_Projected, 2),
+         K_BB_Projected_Upper = round(SO_Projected_Upper / BB_Projected_Upper, 2))
+####################################################################################
 # H/9
 x_vars <- c('H_9_Current','H_9_Prior','H_9_Prior_2','LD_pct_Current','GB_pct_Current',
             'FB_pct_Current','Strike_pct_Current','FBv_Current','FBall_pct_Current',
@@ -130,16 +189,92 @@ future_preds <- future_preds %>%
          H_Projected_Lower = round((H_9_Projected_Lower / 9) * IP_Projected_Lower),
          H_Projected = round((H_9_Projected / 9) * IP_Projected),
          H_Projected_Upper = round((H_9_Projected_Upper / 9) * IP_Projected_Upper))
-
+######################################################################################
+# BABIP
+x_vars <- c('BABIP_Current','BABIP_Prior','BABIP_Prior_2','LD_pct_Current','GB_pct_Current',
+            'FB_pct_Current','Strike_pct_Current','FBv_Current','FBall_pct_Current',
+            'O_Swing_pct_Current','Z_Swing_pct_Current','Swing_pct_Current',
+            'O_Contact_pct_Current','Z_Contact_pct_Current','Contact_pct_Current',
+            'Zone_pct_Current','F_Strike_pct_Current','SwStr_pct_Current',"Age_Projected",
+            'MLB_Service_Projected','Pos_Group_Current','Num_Pitches_Harmonic')
+future_preds_babip <- train_models(historical, 'BABIP_Projected', x_vars, "rqlasso", 3, 1:5)
+future_preds <- future_preds %>%
+  left_join(future_preds_babip[[1]] %>% select(Name, Team, Season_Projected, BABIP_Projected_Lower,
+                                               BABIP_Projected, BABIP_Projected_Upper), 
+            by = c("Name","Team","Season_Projected")) %>% 
+  mutate(BABIP_Projected_Lower = round(BABIP_Projected_Lower, 3),
+         BABIP_Projected = round(BABIP_Projected, 3),
+         BABIP_Projected_Upper = round(BABIP_Projected_Upper, 3))
+#####################################################################################
+# WHIP
+x_vars <- c('WHIP_Current','WHIP_Prior','WHIP_Prior_2','LD_pct_Current','GB_pct_Current',
+            'FB_pct_Current','Strike_pct_Current','FBv_Current','FBall_pct_Current',
+            'O_Swing_pct_Current','Z_Swing_pct_Current','Swing_pct_Current',
+            'O_Contact_pct_Current','Z_Contact_pct_Current','Contact_pct_Current',
+            'Zone_pct_Current','F_Strike_pct_Current','SwStr_pct_Current','HR_FB_Current',
+            "Age_Projected",'MLB_Service_Projected','Pos_Group_Current','Num_Pitches_Harmonic')
+future_preds_whip <- train_models(historical, 'WHIP_Projected', x_vars, "rqlasso", 3, 1:5)
+future_preds <- future_preds %>%
+  left_join(future_preds_whip[[1]] %>% select(Name, Team, Season_Projected, WHIP_Projected_Lower,
+                                              WHIP_Projected, WHIP_Projected_Upper), 
+            by = c("Name","Team","Season_Projected")) %>% 
+  mutate(WHIP_Projected_Lower = round(WHIP_Projected_Lower, 2),
+         WHIP_Projected = round(WHIP_Projected, 2),
+         WHIP_Projected_Upper = round(WHIP_Projected_Upper, 2))
+#####################################################################################
+# ERA
+x_vars <- c('ERA_Current','ERA_Prior','ERA_Prior_2','LD_pct_Current','GB_pct_Current',
+            'FB_pct_Current','Strike_pct_Current','FBv_Current','FBall_pct_Current',
+            'O_Swing_pct_Current','Z_Swing_pct_Current','Swing_pct_Current',
+            'O_Contact_pct_Current','Z_Contact_pct_Current','Contact_pct_Current',
+            'Zone_pct_Current','F_Strike_pct_Current','SwStr_pct_Current','HR_FB_Current',
+            "Age_Projected",'MLB_Service_Projected','Pos_Group_Current','Num_Pitches_Harmonic')
+future_preds_era <- train_models(historical, 'ERA_Projected', x_vars, "rqlasso", 3, 1:5)
+future_preds <- future_preds %>%
+  left_join(future_preds_era[[1]] %>% select(Name, Team, Season_Projected, ERA_Projected_Lower,
+                                               ERA_Projected, ERA_Projected_Upper), 
+            by = c("Name","Team","Season_Projected")) %>% 
+  mutate(ERA_Projected_Lower = round(ERA_Projected_Lower, 2),
+         ERA_Projected = round(ERA_Projected, 2),
+         ERA_Projected_Upper = round(ERA_Projected_Upper, 2))
+######################################################################################
+# FIP
+x_vars <- c('FIP_Current','FIP_Prior','FIP_Prior_2','LD_pct_Current','GB_pct_Current',
+            'FB_pct_Current','Strike_pct_Current','FBv_Current','FBall_pct_Current',
+            'O_Swing_pct_Current','Z_Swing_pct_Current','Swing_pct_Current',
+            'O_Contact_pct_Current','Z_Contact_pct_Current','Contact_pct_Current',
+            'Zone_pct_Current','F_Strike_pct_Current','SwStr_pct_Current','HR_FB_Current',
+            "Age_Projected",'MLB_Service_Projected','Pos_Group_Current','Num_Pitches_Harmonic')
+future_preds_FIP <- train_models(historical, 'FIP_Projected', x_vars, "rqlasso", 3, 1:5)
+future_preds <- future_preds %>%
+  left_join(future_preds_FIP[[1]] %>% select(Name, Team, Season_Projected, FIP_Projected_Lower,
+                                             FIP_Projected, FIP_Projected_Upper), 
+            by = c("Name","Team","Season_Projected")) %>% 
+  mutate(FIP_Projected_Lower = round(FIP_Projected_Lower, 2),
+         FIP_Projected = round(FIP_Projected, 2),
+         FIP_Projected_Upper = round(FIP_Projected_Upper, 2))
+######################################################################################
+# xFIP
+x_vars <- c('xFIP_Current','xFIP_Prior','xFIP_Prior_2','LD_pct_Current','GB_pct_Current',
+            'FB_pct_Current','Strike_pct_Current','FBv_Current','FBall_pct_Current',
+            'O_Swing_pct_Current','Z_Swing_pct_Current','Swing_pct_Current',
+            'O_Contact_pct_Current','Z_Contact_pct_Current','Contact_pct_Current',
+            'Zone_pct_Current','F_Strike_pct_Current','SwStr_pct_Current','HR_FB_Current',
+            "Age_Projected",'MLB_Service_Projected','Pos_Group_Current','Num_Pitches_Harmonic')
+future_preds_xFIP <- train_models(historical, 'xFIP_Projected', x_vars, "rqlasso", 3, 1:5)
+future_preds <- future_preds %>%
+  left_join(future_preds_xFIP[[1]] %>% select(Name, Team, Season_Projected, xFIP_Projected_Lower,
+                                             xFIP_Projected, xFIP_Projected_Upper), 
+            by = c("Name","Team","Season_Projected")) %>% 
+  mutate(xFIP_Projected_Lower = round(xFIP_Projected_Lower, 2),
+         xFIP_Projected = round(xFIP_Projected, 2),
+         xFIP_Projected_Upper = round(xFIP_Projected_Upper, 2))
+#################################################################################
 future_preds <- na.omit(future_preds)
 setwd("C:/Users/rusla/OneDrive/MLBAnalyticsJobs/MLB Player Projections/Pitching/Data")
 write.csv(future_preds, "pitching_projections_data.csv", row.names = F)
 
 ######################################################################################
-
-
-
-
 pitching <- pitching %>% 
   mutate(TrueFB. = FB. - (FB. * IFFB.),
          TrueIFFB. = (FB. * IFFB.),
@@ -157,130 +292,6 @@ pitching <- pitching %>%
   mutate(ERA_minus = (ERA + (ERA - (ERA * ESPN_PF))) / (League_ERA) * 100,
          FIP_minus = (FIP + (FIP - (FIP * ESPN_PF))) / (League_FIP) * 100,
          xFIP_minus = (xFIP + (xFIP - (xFIP * ESPN_PF))) / (League_xFIP) * 100)
-###################################################################################
-# Projecting Hits Per IP, Hits
-pitchers <- add_projection_years(pitchers, 11)
-pitchers2 <- add_projected_prior_seasons(pitchers)
-pitchers2 <- merge_pitching_stats(pitchers2, c('IP','Pos_Group','H_PerIP','K.','BB.',
-                                               'LD.','GB.','FB.','Soft.',
-                                               'Med.','Hard.','Oppo.','Cent.',
-                                               'Pull.','Contact.','Zone.'))
-history_future <- historical_future_split(pitchers2, current_season)
-historical <- history_future[[1]]; future <- history_future[[2]]
-historical <- historical %>% 
-  mutate(IP_Harmonic = 2 / ((1 / IP_Current) + (1 / IP_Projected)))
-
-y_var <- c('H_PerIP_Projected')
-x_vars <- c('H_PerIP_Current','H_PerIP_Prior','H_PerIP_Prior_2','poly(Age_Projected, 2)',
-            'Pos_Group_Current','MLB_Service_Projected','LD._Current',
-            'LD._Prior','LD._Prior_2','GB._Current','GB._Prior','GB._Prior_2',
-            'FB._Current','FB._Prior','FB._Prior_2','Soft._Current','Soft._Prior',
-            'Soft._Prior_2','Med._Current','Med._Prior','Med._Prior_2','Hard._Current',
-            'Hard._Prior','Hard._Prior_2','Oppo._Current','Oppo._Prior','Oppo._Prior_2',
-            'Cent._Current','Cent._Prior','Cent._Prior_2','Pull._Current',
-            'Pull._Prior','Pull._Prior_2','Contact._Current','Contact._Prior',
-            'Contact._Prior_2','Zone._Current','Zone._Prior','Zone._Prior_2',
-            'IP_Harmonic')
-x_vars2 <- c('H_PerIP_Current','H_PerIP_Prior','H_PerIP_Prior_2','Age_Projected',
-            'Pos_Group_Current','MLB_Service_Projected','LD._Current',
-            'LD._Prior','LD._Prior_2','GB._Current','GB._Prior','GB._Prior_2',
-            'FB._Current','FB._Prior','FB._Prior_2','Soft._Current','Soft._Prior',
-            'Soft._Prior_2','Med._Current','Med._Prior','Med._Prior_2','Hard._Current',
-            'Hard._Prior','Hard._Prior_2','Oppo._Current','Oppo._Prior','Oppo._Prior_2',
-            'Cent._Current','Cent._Prior','Cent._Prior_2','Pull._Current',
-            'Pull._Prior','Pull._Prior_2','Contact._Current','Contact._Prior',
-            'Contact._Prior_2','Zone._Current','Zone._Prior','Zone._Prior_2',
-            'IP_Harmonic')
-
-list_of_errors <- list()
-list_of_mapes <- list()
-for (i in 1:5)
-{
-  print(i)
-  print('---------------------------------------------------------')
-  x <- train_models(historical, y_var, x_vars, x_vars2, model_type = 'gbm', tuneLength = 5, 
-                    years_out = i)
-  mapes <- do.call(rbind, x[[1]])
-  resid <- unlist(x[[4]])
-  list_of_errors[[i]] <- resid
-  list_of_mapes[[i]] <- mapes
-}
-# Run final model through current_season and predict future seasons
-errors <- list_of_errors
-z <- predict_future_years(historical, future, y_var, x_vars, x_vars2, 
-                          model_type = 'gbm', tuneLength = 5, years_out = 5, errors, 1)
-model <- z[[2]]
-#coef(model$finalModel, model$bestTune$lambda)
-
-H_PerIP <- z[[1]] %>% 
-  select(Season_Projected, Playerid, Stat_Projected, 
-         Stat_Projected_Upper, Stat_Projected_Lower) %>%
-  rename(H_PerIP = 'Stat_Projected', H_PerIP_Upper = 'Stat_Projected_Upper', 
-         H_PerIP_Lower = 'Stat_Projected_Lower')
-
-future_preds <- future_preds %>% 
-  inner_join(H_PerIP, by = c('Playerid','Season_Projected')) %>%
-  mutate(H = H_PerIP * IP, 
-         H_Upper = H_PerIP_Upper * IP_Upper,
-         H_Lower = H_PerIP_Lower * IP_Lower)
-####################################################################################
-# Projecting BB using BB_PerIP
-pitchers <- add_projection_years(pitchers, 11)
-pitchers2 <- add_projected_prior_seasons(pitchers)
-pitchers2 <- merge_pitching_stats(pitchers2, c('IP','Pos_Group','BB_PerIP',
-                                               'SwStr.','Swing.','Contact.',
-                                               'Zone.','F.Strike.','O.Contact.','Z.Contact.',
-                                               'Z.Swing.','O.Swing.'))
-history_future <- historical_future_split(pitchers2, current_season)
-historical <- history_future[[1]]; future <- history_future[[2]]
-historical <- historical %>% 
-  mutate(IP_Harmonic = 2 / ((1 / IP_Current) + (1 / IP_Projected)))
-
-y_var <- c('BB_PerIP_Projected')
-x_vars <- c('BB_PerIP_Current','BB_PerIP_Prior','BB_PerIP_Prior_2','poly(Age_Projected, 2)',
-            'Pos_Group_Current','MLB_Service_Projected','SwStr._Current','SwStr._Prior',
-            'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
-            'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
-            'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-            'F.Strike._Prior_2','IP_Harmonic')
-x_vars2 <- c('BB_PerIP_Current','BB_PerIP_Prior','BB_PerIP_Prior_2','Age_Projected',
-             'Pos_Group_Current','MLB_Service_Projected','SwStr._Current','SwStr._Prior',
-             'SwStr._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
-             'Contact._Current','Contact._Prior','Contact._Prior_2','Zone._Current',
-             'Zone._Prior','Zone._Prior_2','F.Strike._Current','F.Strike._Prior',
-             'F.Strike._Prior_2','IP_Harmonic')
-
-list_of_errors <- list()
-list_of_mapes <- list()
-for (i in 1:5)
-{
-  print(i)
-  print('---------------------------------------------------------')
-  x <- train_models(historical, y_var, x_vars, x_vars2, model_type = 'gbm', tuneLength = 5, 
-                    years_out = i)
-  mapes <- do.call(rbind, x[[1]])
-  resid <- unlist(x[[4]])
-  list_of_errors[[i]] <- resid
-  list_of_mapes[[i]] <- mapes
-}
-# Run final model through current_season and predict future seasons
-errors <- list_of_errors
-z <- predict_future_years(historical, future, y_var, x_vars, x_vars2, 
-                          model_type = 'gbm', tuneLength = 5, years_out = 5, errors, 1)
-model <- z[[2]]
-#coef(model$finalModel, model$bestTune$lambda)
-
-BB_PerIP <- z[[1]] %>% 
-  select(Season_Projected, Playerid, Stat_Projected, 
-         Stat_Projected_Upper, Stat_Projected_Lower) %>%
-  rename(BB_PerIP = 'Stat_Projected', BB_PerIP_Upper = 'Stat_Projected_Upper', 
-         BB_PerIP_Lower = 'Stat_Projected_Lower')
-
-future_preds <- future_preds %>% 
-  inner_join(BB_PerIP, by = c('Playerid','Season_Projected')) %>%
-  mutate(BB = BB_PerIP * IP, 
-         BB_Upper = BB_PerIP_Upper * IP_Upper,
-         BB_Lower = BB_PerIP_Lower * IP_Lower)
 ####################################################################################
 # Projecting HBP Per IP using to find HBP total
 pitchers <- add_projection_years(pitchers, 11)
@@ -331,68 +342,6 @@ future_preds <- future_preds %>%
   mutate(TBF = IP*2.9 + H + BB + HBP,
          TBF_Lower = IP_Lower*2.9 + H_Lower + BB_Lower + HBP_Lower,
          TBF_Upper = IP_Upper*2.9 + H_Upper + BB_Upper + HBP_Upper)
-#######################################################################
-# Projecting BABIP
-pitchers <- add_projection_years(pitchers, 11)
-pitchers2 <- add_projected_prior_seasons(pitchers)
-pitchers2 <- merge_pitching_stats(pitchers2, c('IP','Pos_Group','BABIP',
-                                               'xBABIP','Pull.','Oppo.',
-                                               'Cent.','Soft.','Med.','Hard.',
-                                               'GB.','LD.','FB.'))
-history_future <- historical_future_split(pitchers2, current_season)
-historical <- history_future[[1]]; future <- history_future[[2]]
-historical <- historical %>% 
-  mutate(IP_Harmonic = 2 / ((1 / IP_Current) + (1 / IP_Projected)))
-
-y_var <- c('BABIP_Projected')
-x_vars <- c('BABIP_Current','BABIP_Prior','BABIP_Prior_2','poly(Age_Projected, 2)',
-            'xBABIP_Current','xBABIP_Prior','xBABIP_Prior_2',
-            'Pos_Group_Current','MLB_Service_Projected','LD._Current',
-            'LD._Prior','LD._Prior_2','GB._Current','GB._Prior','GB._Prior_2',
-            'FB._Current','FB._Prior','FB._Prior_2','Soft._Current','Soft._Prior',
-            'Soft._Prior_2','Med._Current','Med._Prior','Med._Prior_2','Hard._Current',
-            'Hard._Prior','Hard._Prior_2','Oppo._Current','Oppo._Prior','Oppo._Prior_2',
-            'Cent._Current','Cent._Prior','Cent._Prior_2','Pull._Current',
-            'Pull._Prior','Pull._Prior_2',
-            'IP_Harmonic')
-x_vars2 <- c('BABIP_Current','BABIP_Prior','BABIP_Prior_2','Age_Projected',
-             'Pos_Group_Current','MLB_Service_Projected','LD._Current',
-             'xBABIP_Current','xBABIP_Prior','xBABIP_Prior_2',
-             'LD._Prior','LD._Prior_2','GB._Current','GB._Prior','GB._Prior_2',
-             'FB._Current','FB._Prior','FB._Prior_2','Soft._Current','Soft._Prior',
-             'Soft._Prior_2','Med._Current','Med._Prior','Med._Prior_2','Hard._Current',
-             'Hard._Prior','Hard._Prior_2','Oppo._Current','Oppo._Prior','Oppo._Prior_2',
-             'Cent._Current','Cent._Prior','Cent._Prior_2','Pull._Current',
-             'Pull._Prior','Pull._Prior_2',
-             'IP_Harmonic')
-list_of_errors <- list()
-list_of_mapes <- list()
-for (i in 1:5)
-{
-  print(i)
-  print('---------------------------------------------------------')
-  x <- train_models(historical, y_var, x_vars, x_vars2, model_type = 'gbm', tuneLength = 5, 
-                    years_out = i)
-  mapes <- do.call(rbind, x[[1]])
-  resid <- unlist(x[[4]])
-  list_of_errors[[i]] <- resid
-  list_of_mapes[[i]] <- mapes
-}
-# Run final model through current_season and predict future seasons
-errors <- list_of_errors
-z <- predict_future_years(historical, future, y_var, x_vars, x_vars2, 
-                          model_type = 'gbm', tuneLength = 5, years_out = 5, errors, 1)
-model <- z[[2]]
-#coef(model$finalModel, model$bestTune$lambda)
-
-BABIP <- z[[1]] %>% 
-  select(Season_Projected, Playerid, Stat_Projected, 
-         Stat_Projected_Upper, Stat_Projected_Lower) %>%
-  rename(BABIP = 'Stat_Projected', BABIP_Upper = 'Stat_Projected_Upper', 
-         BABIP_Lower = 'Stat_Projected_Lower')
-
-future_preds <- future_preds %>% 
-  inner_join(BABIP, by = c('Playerid','Season_Projected'))
 ####################################################################
 # Projecting BIP Per IP
 pitchers <- add_projection_years(pitchers, 11)
@@ -461,150 +410,6 @@ future_preds <- future_preds %>%
          BIP_Lower = BIP_PerIP_Lower * IP_Lower,
          BIP_Upper = BIP_PerIP_Upper * IP_Upper)
 ####################################################################################
-# Projecting K%
-pitchers <- add_projection_years(pitchers, 11)
-pitchers2 <- add_projected_prior_seasons(pitchers)
-pitchers2 <- merge_pitching_stats(pitchers2, c('IP','Pos_Group','K.','GB.',
-                                               'FB.','LD.','FBv','FB_Thrown.','HR.FB.1',
-                                               'O.Swing.','Z.Swing.','Swing.','Zone.',
-                                               'O.Contact.','Z.Contact.','Contact.',
-                                               'F.Strike.','SwStr.'))
-history_future <- historical_future_split(pitchers2, current_season)
-historical <- history_future[[1]]; future <- history_future[[2]]
-historical <- historical %>% 
-  mutate(IP_Harmonic = 2 / ((1 / IP_Current) + (1 / IP_Projected)))
-
-y_var <- c('K._Projected')
-x_vars <- c('K._Current','K._Prior','K._Prior_2','poly(Age_Projected, 2)',
-            'Pos_Group_Current','MLB_Service_Projected','FBv_Current',
-            'FBv_Prior','FBv_Prior_2','O.Swing._Current','O.Swing._Prior',
-            'O.Swing._Prior_2','Z.Swing._Current','Z.Swing._Prior',
-            'Z.Swing._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
-            'O.Contact._Current','O.Contact._Prior','O.Contact._Prior_2',
-            'Z.Contact._Current','Z.Contact._Prior','Z.Contact._Prior_2',
-            'Contact._Current','Contact._Prior','Contact._Prior_2',
-            'Zone._Current','Zone._Prior','Zone._Prior_2','F.Strike._Current',
-            'F.Strike._Prior','F.Strike._Prior_2','SwStr._Current','SwStr._Prior',
-            'SwStr._Prior_2','IP_Harmonic')
-x_vars2 <- c('K._Current','K._Prior','K._Prior_2','Age_Projected',
-            'Pos_Group_Current','MLB_Service_Projected','FBv_Current',
-            'FBv_Prior','FBv_Prior_2','O.Swing._Current','O.Swing._Prior',
-            'O.Swing._Prior_2','Z.Swing._Current','Z.Swing._Prior',
-            'Z.Swing._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
-            'O.Contact._Current','O.Contact._Prior','O.Contact._Prior_2',
-            'Z.Contact._Current','Z.Contact._Prior','Z.Contact._Prior_2',
-            'Contact._Current','Contact._Prior','Contact._Prior_2',
-            'Zone._Current','Zone._Prior','Zone._Prior_2','F.Strike._Current',
-            'F.Strike._Prior','F.Strike._Prior_2','SwStr._Current','SwStr._Prior',
-            'SwStr._Prior_2','IP_Harmonic')
-
-list_of_errors <- list()
-list_of_mapes <- list()
-for (i in 1:5)
-{
-  print(i)
-  print('---------------------------------------------------------')
-  x <- train_models(historical, y_var, x_vars, x_vars2, model_type = 'gbm', tuneLength = 5, 
-                    years_out = i)
-  mapes <- do.call(rbind, x[[1]])
-  resid <- unlist(x[[4]])
-  list_of_errors[[i]] <- resid
-  list_of_mapes[[i]] <- mapes
-}
-# Run final model through current_season and predict future seasons
-errors <- list_of_errors
-z <- predict_future_years(historical, future, y_var, x_vars, x_vars2, 
-                          model_type = 'gbm', tuneLength = 5, years_out = 5, errors, 1)
-model <- z[[2]]
-#coef(model$finalModel, model$bestTune$lambda)
-
-K. <- z[[1]] %>% 
-  select(Season_Projected, Playerid, Stat_Projected, 
-         Stat_Projected_Upper, Stat_Projected_Lower) %>%
-  rename(K. = 'Stat_Projected', K._Upper = 'Stat_Projected_Upper', 
-         K._Lower = 'Stat_Projected_Lower')
-
-future_preds <- future_preds %>% 
-  inner_join(K., by = c('Playerid','Season_Projected')) %>%
-  mutate(SO = K. * TBF,
-         SO_Lower = K._Lower * TBF_Lower,
-         SO_Upper = K._Upper * TBF_Upper,
-         K_Per9 = (SO / IP) * 9,
-         K_Per9_Lower = (SO_Lower / IP_Lower) * 9,
-         K_Per9_Upper = (SO_Upper / IP_Upper) * 9)
-#########################################################################
-# Projecting BB%
-pitchers <- add_projection_years(pitchers, 11)
-pitchers2 <- add_projected_prior_seasons(pitchers)
-pitchers2 <- merge_pitching_stats(pitchers2, c('IP','Pos_Group','BB.','GB.',
-                                               'FB.','LD.','FBv','FB_Thrown.','HR.FB.1',
-                                               'O.Swing.','Z.Swing.','Swing.','Zone.',
-                                               'O.Contact.','Z.Contact.','Contact.',
-                                               'F.Strike.','SwStr.'))
-history_future <- historical_future_split(pitchers2, current_season)
-historical <- history_future[[1]]; future <- history_future[[2]]
-historical <- historical %>% 
-  mutate(IP_Harmonic = 2 / ((1 / IP_Current) + (1 / IP_Projected)))
-
-y_var <- c('BB._Projected')
-x_vars <- c('BB._Current','BB._Prior','BB._Prior_2','poly(Age_Projected, 2)',
-            'Pos_Group_Current','MLB_Service_Projected','FBv_Current',
-            'FBv_Prior','FBv_Prior_2','O.Swing._Current','O.Swing._Prior',
-            'O.Swing._Prior_2','Z.Swing._Current','Z.Swing._Prior',
-            'Z.Swing._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
-            'O.Contact._Current','O.Contact._Prior','O.Contact._Prior_2',
-            'Z.Contact._Current','Z.Contact._Prior','Z.Contact._Prior_2',
-            'Contact._Current','Contact._Prior','Contact._Prior_2',
-            'Zone._Current','Zone._Prior','Zone._Prior_2','F.Strike._Current',
-            'F.Strike._Prior','F.Strike._Prior_2','SwStr._Current','SwStr._Prior',
-            'SwStr._Prior_2','IP_Harmonic')
-x_vars2 <- c('BB._Current','BB._Prior','BB._Prior_2','Age_Projected',
-             'Pos_Group_Current','MLB_Service_Projected','FBv_Current',
-             'FBv_Prior','FBv_Prior_2','O.Swing._Current','O.Swing._Prior',
-             'O.Swing._Prior_2','Z.Swing._Current','Z.Swing._Prior',
-             'Z.Swing._Prior_2','Swing._Current','Swing._Prior','Swing._Prior_2',
-             'O.Contact._Current','O.Contact._Prior','O.Contact._Prior_2',
-             'Z.Contact._Current','Z.Contact._Prior','Z.Contact._Prior_2',
-             'Contact._Current','Contact._Prior','Contact._Prior_2',
-             'Zone._Current','Zone._Prior','Zone._Prior_2','F.Strike._Current',
-             'F.Strike._Prior','F.Strike._Prior_2','SwStr._Current','SwStr._Prior',
-             'SwStr._Prior_2','IP_Harmonic')
-
-list_of_errors <- list()
-list_of_mapes <- list()
-for (i in 1:5)
-{
-  print(i)
-  print('---------------------------------------------------------')
-  x <- train_models(historical, y_var, x_vars, x_vars2, model_type = 'gbm', tuneLength = 5, 
-                    years_out = i)
-  mapes <- do.call(rbind, x[[1]])
-  resid <- unlist(x[[4]])
-  list_of_errors[[i]] <- resid
-  list_of_mapes[[i]] <- mapes
-}
-# Run final model through current_season and predict future seasons
-errors <- list_of_errors
-z <- predict_future_years(historical, future, y_var, x_vars, x_vars2, 
-                          model_type = 'gbm', tuneLength = 5, years_out = 5, errors, 1)
-model <- z[[2]]
-#coef(model$finalModel, model$bestTune$lambda)
-
-BB. <- z[[1]] %>% 
-  select(Season_Projected, Playerid, Stat_Projected, 
-         Stat_Projected_Upper, Stat_Projected_Lower) %>%
-  rename(BB. = 'Stat_Projected', BB._Upper = 'Stat_Projected_Upper', 
-         BB._Lower = 'Stat_Projected_Lower')
-
-future_preds <- future_preds %>% 
-  inner_join(BB., by = c('Playerid','Season_Projected')) %>%
-  mutate(BB = BB. * TBF,
-         BB_Lower = BB._Lower * TBF_Lower,
-         BB_Upper = BB._Upper * TBF_Upper,
-         BB_Per9 = (BB / IP) * 9,
-         BB_Per9_Lower = (BB_Lower / IP_Lower) * 9,
-         BB_Per9_Upper = (BB_Upper / IP_Upper) * 9)
-#########################################################################
 # Projecting ERA
 pitchers <- add_projection_years(pitchers, 11)
 pitchers2 <- add_projected_prior_seasons(pitchers)
