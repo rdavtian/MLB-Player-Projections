@@ -294,6 +294,9 @@ future_preds <- na.omit(future_preds)
 setwd("C:/Users/rusla/OneDrive/MLBAnalyticsJobs/MLB Player Projections/Pitching/Data")
 write.csv(future_preds, "pitching_projections_data.csv", row.names = F)
 
+
+setwd("C:/Users/rusla/OneDrive/MLBAnalyticsJobs/MLB Player Projections/R Shiny")
+write.csv(pitching_clean, "past_pitching_data.csv", row.names = F)
 ######################################################################################
 pitching <- pitching %>% 
   mutate(TrueFB. = FB. - (FB. * IFFB.),

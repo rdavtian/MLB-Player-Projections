@@ -558,7 +558,7 @@ print_pitching_projection_leaderboards <- function(season, future_data, quantile
       select(Name, Season_Projected, Age_Projected, G_Projected, GS_Projected, 
              IP_Projected, H_Projected, BB_Projected, SO_Projected, K_9_Projected, 
              BB_9_Projected, K_BB_Projected, K_pct_Projected, BB_pct_Projected,
-             WAR_Projected, WHIP_Projected, BABIP_Projected, ERA_Projected, 
+             AVG_Projected, WHIP_Projected, BABIP_Projected, ERA_Projected, 
              FIP_Projected, xFIP_Projected, WAR_200IP_Projected) %>%
       mutate(BB_pct_Projected = BB_pct_Projected / 100,
              K_pct_Projected = K_pct_Projected / 100)
