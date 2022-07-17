@@ -322,6 +322,7 @@ plot_pitching_past_future_performance <- function(player, past_data, future_data
   stat2 <- str_replace(stat2, "_162_G", " Per 162 GP")
   stat2 <- str_replace(stat2, "_9", "/9")
   stat2 <- str_replace(stat2, "K_BB", "K/BB")
+  stat2 <- str_replace(stat2, "_200IP", " Per 200 IP")
   lower <- paste0(stat, "_Projected_Lower")
   upper <- paste0(stat, "_Projected_Upper")
   
@@ -395,6 +396,7 @@ plot_pitching_player_comparison <- function(player1, player2, past_data, future_
   stat2 <- str_replace(stat2, "_162_G", " Per 162 GP")
   stat2 <- str_replace(stat2, "_9", "/9")
   stat2 <- str_replace(stat2, "K_BB", "K/BB")
+  stat2 <- str_replace(stat2, "_200IP", " Per 200 IP")
   lower <- paste0(stat, "_Projected_Lower")
   upper <- paste0(stat, "_Projected_Upper")
   
@@ -468,10 +470,10 @@ print_pitching_player_projections <- function(player, quantile, past_data, futur
   past <- past_data %>% 
     filter(Name == player) %>% 
     select(Season, Age, G, GS, IP, H, BB, SO, K_9, BB_9, K_BB, K_pct, BB_pct, 
-           WHIP, BABIP, ERA, FIP, xFIP) %>%
+           AVG, WHIP, BABIP, ERA, FIP, xFIP, WAR_200IP) %>%
     mutate(BB_pct = paste0(BB_pct, "%"), K_pct = paste0(K_pct, "%")) %>%
     rename("K/9" = "K_9", "BB/9" = "BB_9", "K/BB" = "K_BB",
-           "BB%" = "BB_pct", "K%" = "K_pct") %>% arrange(Season)
+           "BB%" = "BB_pct", "K%" = "K_pct", "WAR/200IP" = "WAR_200IP") %>% arrange(Season)
   
   if (quantile == 0.5)
   {
@@ -480,14 +482,15 @@ print_pitching_player_projections <- function(player, quantile, past_data, futur
       select(Season_Projected, Age_Projected, G_Projected, GS_Projected, 
              IP_Projected, H_Projected, BB_Projected, SO_Projected, K_9_Projected, 
              BB_9_Projected, K_BB_Projected, K_pct_Projected, BB_pct_Projected,
-             WHIP_Projected, BABIP_Projected, ERA_Projected, FIP_Projected, xFIP_Projected) %>%
+             AVG_Projected, WHIP_Projected, BABIP_Projected, ERA_Projected, FIP_Projected, 
+             xFIP_Projected, WAR_200IP_Projected) %>%
     mutate(BB_pct_Projected = paste0(BB_pct_Projected, "%"),
            K_pct_Projected = paste0(K_pct_Projected, "%"))
     colnames(future) <- str_replace(colnames(future), "_Projected", "")
     colnames(future) <- str_replace(colnames(future), "_pct", "%")
     colnames(future) <- str_replace(colnames(future), "_plus", "+")
     colnames(future) <- str_replace(colnames(future), "_9", "/9")
-    future <- future %>% rename("K/BB" = "K_BB")
+    future <- future %>% rename("K/BB" = "K_BB", "WAR/200IP" = "WAR_200IP")
     tab <- rbind(past, future)
     kable(tab %>% arrange(Season), rownames = F) %>% 
       kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
@@ -502,8 +505,9 @@ print_pitching_player_projections <- function(player, quantile, past_data, futur
              IP_Projected_Lower, H_Projected_Lower, BB_Projected_Lower,
              SO_Projected_Lower, K_9_Projected_Lower, BB_9_Projected_Lower, 
              K_BB_Projected_Lower, K_pct_Projected_Lower, BB_pct_Projected_Lower,
-             WHIP_Projected_Lower, BABIP_Projected_Lower, ERA_Projected_Lower, 
-             FIP_Projected_Lower, xFIP_Projected_Lower) %>% 
+             AVG_Projected_Lower, WHIP_Projected_Lower, BABIP_Projected_Lower, 
+             ERA_Projected_Lower, FIP_Projected_Lower, xFIP_Projected_Lower, 
+             WAR_200IP_Projected_Lower) %>% 
     mutate(BB_pct_Projected_Lower = paste0(BB_pct_Projected_Lower, "%"),
            K_pct_Projected_Lower = paste0(K_pct_Projected_Lower, "%"))
     colnames(future) <- str_replace(colnames(future), "_Projected_Lower", "")
@@ -511,7 +515,7 @@ print_pitching_player_projections <- function(player, quantile, past_data, futur
     colnames(future) <- str_replace(colnames(future), "_pct", "%")
     colnames(future) <- str_replace(colnames(future), "_plus", "+")
     colnames(future) <- str_replace(colnames(future), "_9", "/9")
-    future <- future %>% rename("K/BB" = "K_BB")
+    future <- future %>% rename("K/BB" = "K_BB", "WAR/200IP" = "WAR_200IP")
     tab <- rbind(past, future)
     kable(tab %>% arrange(Season), rownames = F) %>% 
       kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
@@ -525,8 +529,9 @@ print_pitching_player_projections <- function(player, quantile, past_data, futur
              IP_Projected_Upper, H_Projected_Upper, BB_Projected_Upper,
              SO_Projected_Upper, K_9_Projected_Upper, BB_9_Projected_Upper, 
              K_BB_Projected_Upper, K_pct_Projected_Upper, BB_pct_Projected_Upper,
-             WHIP_Projected_Upper, BABIP_Projected_Upper, ERA_Projected_Upper, 
-             FIP_Projected_Upper, xFIP_Projected_Upper) %>% 
+             AVG_Projected_Upper, WHIP_Projected_Upper, BABIP_Projected_Upper, 
+             ERA_Projected_Upper, FIP_Projected_Upper, xFIP_Projected_Upper,
+             WAR_200IP_Projected_Upper) %>% 
     mutate(BB_pct_Projected_Upper = paste0(BB_pct_Projected_Upper, "%"),
            K_pct_Projected_Upper = paste0(K_pct_Projected_Upper, "%"))
     colnames(future) <- str_replace(colnames(future), "_Projected_Upper", "")
@@ -534,7 +539,7 @@ print_pitching_player_projections <- function(player, quantile, past_data, futur
     colnames(future) <- str_replace(colnames(future), "_pct", "%")
     colnames(future) <- str_replace(colnames(future), "_plus", "+")
     colnames(future) <- str_replace(colnames(future), "_9", "/9")
-    future <- future %>% rename("K/BB" = "K_BB")
+    future <- future %>% rename("K/BB" = "K_BB", "WAR/200IP" = "WAR_200IP")
     tab <- rbind(past, future)
     kable(tab %>% arrange(Season), rownames = F) %>% 
       kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
@@ -553,14 +558,15 @@ print_pitching_projection_leaderboards <- function(season, future_data, quantile
       select(Name, Season_Projected, Age_Projected, G_Projected, GS_Projected, 
              IP_Projected, H_Projected, BB_Projected, SO_Projected, K_9_Projected, 
              BB_9_Projected, K_BB_Projected, K_pct_Projected, BB_pct_Projected,
-             WHIP_Projected, BABIP_Projected, ERA_Projected, FIP_Projected, xFIP_Projected) %>%
+             WAR_Projected, WHIP_Projected, BABIP_Projected, ERA_Projected, 
+             FIP_Projected, xFIP_Projected, WAR_200IP_Projected) %>%
       mutate(BB_pct_Projected = BB_pct_Projected / 100,
              K_pct_Projected = K_pct_Projected / 100)
     colnames(future) <- str_replace(colnames(future), "_Projected", "")
     colnames(future) <- str_replace(colnames(future), "_pct", "%")
     colnames(future) <- str_replace(colnames(future), "_plus", "+")
     colnames(future) <- str_replace(colnames(future), "_9", "/9")
-    future <- future %>% rename("K/BB" = "K_BB")
+    future <- future %>% rename("K/BB" = "K_BB", "WAR/200IP" = "WAR_200IP")
   }  else if (quantile == 0.05) {
     future <- future_data %>% 
       filter(Season_Projected == season) %>%
@@ -568,8 +574,9 @@ print_pitching_projection_leaderboards <- function(season, future_data, quantile
              IP_Projected_Lower, H_Projected_Lower, BB_Projected_Lower,
              SO_Projected_Lower, K_9_Projected_Lower, BB_9_Projected_Lower, 
              K_BB_Projected_Lower, K_pct_Projected_Lower, BB_pct_Projected_Lower,
-             WHIP_Projected_Lower, BABIP_Projected_Lower, ERA_Projected_Lower, 
-             FIP_Projected_Lower, xFIP_Projected_Lower) %>% 
+             AVG_Projected_Lower, WHIP_Projected_Lower, BABIP_Projected_Lower, 
+             ERA_Projected_Lower, FIP_Projected_Lower, xFIP_Projected_Lower, 
+             WAR_200IP_Projected_Lower) %>% 
       mutate(BB_pct_Projected_Lower = BB_pct_Projected_Lower / 100,
              K_pct_Projected_Lower = K_pct_Projected_Lower / 100)
     colnames(future) <- str_replace(colnames(future), "_Projected_Lower", "")
@@ -577,7 +584,7 @@ print_pitching_projection_leaderboards <- function(season, future_data, quantile
     colnames(future) <- str_replace(colnames(future), "_pct", "%")
     colnames(future) <- str_replace(colnames(future), "_plus", "+")
     colnames(future) <- str_replace(colnames(future), "_9", "/9")
-    future <- future %>% rename("K/BB" = "K_BB")
+    future <- future %>% rename("K/BB" = "K_BB", "WAR/200IP" = "WAR_200IP")
   } else if (quantile == 0.95) {
     future <- future_data %>% 
       filter(Season_Projected == season) %>%
@@ -585,8 +592,9 @@ print_pitching_projection_leaderboards <- function(season, future_data, quantile
              IP_Projected_Upper, H_Projected_Upper, BB_Projected_Upper,
              SO_Projected_Upper, K_9_Projected_Upper, BB_9_Projected_Upper, 
              K_BB_Projected_Upper, K_pct_Projected_Upper, BB_pct_Projected_Upper,
-             WHIP_Projected_Upper, BABIP_Projected_Upper, ERA_Projected_Upper, 
-             FIP_Projected_Upper, xFIP_Projected_Upper) %>% 
+             AVG_Projected_Upper, WHIP_Projected_Upper, BABIP_Projected_Upper, 
+             ERA_Projected_Upper, FIP_Projected_Upper, xFIP_Projected_Upper, 
+             WAR_200IP_Projected_Upper) %>% 
       mutate(BB_pct_Projected_Upper = BB_pct_Projected_Upper / 100,
              K_pct_Projected_Upper = K_pct_Projected_Upper / 100)
     colnames(future) <- str_replace(colnames(future), "_Projected_Upper", "")
@@ -594,7 +602,7 @@ print_pitching_projection_leaderboards <- function(season, future_data, quantile
     colnames(future) <- str_replace(colnames(future), "_pct", "%")
     colnames(future) <- str_replace(colnames(future), "_plus", "+")
     colnames(future) <- str_replace(colnames(future), "_9", "/9")
-    future <- future %>% rename("K/BB" = "K_BB")
+    future <- future %>% rename("K/BB" = "K_BB", "WAR/200IP" = "WAR_200IP")
   }
   return(future)
 }
