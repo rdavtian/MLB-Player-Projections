@@ -188,7 +188,7 @@ clean_pitching_data <- function(data)
            GS_pct = case_when(Season == 2020 ~ round(GS / 60, 3), 
                               TRUE ~ round(GS / 162, 3)),
            IP_G = round(IP / G, 3),
-           WAR_200IP = round((WAR / IP) * 200, 2),
+           WAR_200IP = round((WAR / IP) * 200, 1),
            #xBABIP = (.128*`FB%`) + (.234*`GB%`) + (0.700*`LD%`),
            StartIP_GS = case_when(GS > 0 ~ round(Start_IP / GS,3), TRUE ~ 0),
            BIP = GB + FB + LD,
