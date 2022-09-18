@@ -30,7 +30,6 @@ scrape_fangraphs_range <- function(season_start, season_end, area)
                                          season_end = season_end, league = "all", qual = 40, ind = 1)
         df <- df %>% mutate(Season = as.character(season_end))
       } else {
-        print(i)
         df <- baseball_fangraphs_scraper(area = "pitching", season_start = season_end, pitcher_type = "pit",
                                          season_end = season_end, league = "all", qual = 20, ind = 1)
         df <- df %>% mutate(Season = as.character(season_end))
@@ -196,7 +195,7 @@ add_projection_years <- function(data, forecast_year)
   for (name in unique(data$Name)) 
   { 
     season <- data %>% filter(Name == name) %>% select(Season) %>% pull() %>% max()
-    age <- data %>% filter(Name == name, Season == season) %>% select(Age) %>% pull()
+    age <- data %>% filter(Name == name, Season == season) %>% select(Age) %>% pull() %>% min()
     player_id <- data %>% filter(Name == name, Season == season, Age == age) %>% select(playerid) %>% distinct() %>% pull()
     team <- data %>% filter(playerid == player_id, Season == season) %>% select(Team) %>% distinct() %>% pull()
     if (season >= current_season - 1)
@@ -557,8 +556,12 @@ train_models <- function(historical_data, y_var, x_vars, model_type, tuneLength,
   
   if (model_type == "qrf")
   {
-    preds <- data.frame(predict(model$finalModel, newdata = future2 %>% select(-all_of(y_var)), 
-                                what = c(0.05, 0.5, 0.95)))
+    newdata <- future2 %>% select(-all_of(y_var), -Name, -Team) %>%
+      mutate(`poly(Age_Projected, 3)1` = poly(future2$Age_Projected, degree = 3, raw = T)[,1],
+             `poly(Age_Projected, 3)2` = poly(future2$Age_Projected, degree = 3, raw = T)[,2],
+             `poly(Age_Projected, 3)3` = poly(future2$Age_Projected, degree = 3, raw = T)[,3]) %>%
+      select(all_of(model$finalModel$xNames))
+    preds <- data.frame(predict(model$finalModel, newdata = newdata, what = c(0.05, 0.5, 0.95)))
   } else if (model_type %in% c("rqnc","rqlasso")) {
     
     newdata <- future2 %>% select(-all_of(y_var), -Name, -Team) %>%

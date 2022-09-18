@@ -17,7 +17,7 @@ library('xml2')
 library('kableExtra')
 source('functions.R')
 options(scipen = 999)
-current_season <- as.numeric(substr(Sys.Date(), 1, 4)) - 1
+current_season <- as.numeric(substr(Sys.Date(), 1, 4))
 teamnames <- baseballr::teams_lu_table %>% 
   filter(sport.name == "Major League Baseball") %>% 
   select(teamName, abbreviation, league.name) %>% distinct() %>% 
@@ -289,14 +289,10 @@ future_preds <- future_preds %>%
   mutate(WAR_200IP_Projected_Lower = round(WAR_200IP_Projected_Lower, 1),
          WAR_200IP_Projected = round(WAR_200IP_Projected, 1),
          WAR_200IP_Projected_Upper = round(WAR_200IP_Projected_Upper, 1))
-#################################################################################
+
 future_preds <- na.omit(future_preds)
-setwd("C:/Users/rusla/OneDrive/MLBAnalyticsJobs/MLB Player Projections/Pitching/Data")
-write.csv(future_preds, "pitching_projections_data.csv", row.names = F)
-
-
-setwd("C:/Users/rusla/OneDrive/MLBAnalyticsJobs/MLB Player Projections/R Shiny")
-write.csv(pitching_clean, "past_pitching_data.csv", row.names = F)
+write.csv(future_preds, "C:\\Users\\rusla\\OneDrive\\MLBAnalyticsJobs\\MLB Player Projections\\Pitching\\Data\\pitching_projections_data.csv", row.names = F)
+write.csv(pitching_clean, "C:\\Users\\rusla\\OneDrive\\MLBAnalyticsJobs\\MLB Player Projections\\R Shiny\\past_pitching_data.csv", row.names = F)
 ######################################################################################
 pitching <- pitching %>% 
   mutate(TrueFB. = FB. - (FB. * IFFB.),

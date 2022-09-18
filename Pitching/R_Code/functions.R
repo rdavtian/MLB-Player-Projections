@@ -30,7 +30,6 @@ scrape_fangraphs_range <- function(season_start, season_end, area)
                                          season_end = season_end, league = "all", qual = 40, ind = 1)
         df <- df %>% mutate(Season = as.character(season_end))
       } else {
-        print(i)
         df <- baseball_fangraphs_scraper(area = "pitching", season_start = season_end, pitcher_type = "pit",
                                          season_end = season_end, league = "all", qual = 20, ind = 1)
         df <- df %>% mutate(Season = as.character(season_end))
@@ -206,7 +205,7 @@ add_projection_years <- function(data, forecast_year)
   for (name in unique(data$Name)) 
   { 
     season <- data %>% filter(Name == name) %>% select(Season) %>% pull() %>% max()
-    age <- data %>% filter(Name == name, Season == season) %>% select(Age) %>% pull()
+    age <- data %>% filter(Name == name, Season == season) %>% select(Age) %>% pull() %>% min()
     player_id <- data %>% filter(Name == name, Season == season, Age == age) %>% select(playerid) %>% distinct() %>% pull()
     team <- data %>% filter(playerid == player_id, Season == season) %>% select(Team) %>% distinct() %>% pull()
     if (season >= current_season - 1)

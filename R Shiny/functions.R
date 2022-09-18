@@ -1,6 +1,6 @@
 future_preds_hitters <- read.csv("https://raw.githubusercontent.com/rdavtian/MLB-Player-Projections/master/Hitting/Data/hitting_projections_data.csv", fileEncoding = 'UTF-8-BOM')
 future_preds_pitchers <- read.csv("https://raw.githubusercontent.com/rdavtian/MLB-Player-Projections/master/Pitching/Data/pitching_projections_data.csv", fileEncoding = 'UTF-8-BOM')
-current_season <- as.numeric(substr(Sys.Date(), 1, 4)) - 1
+current_season <- as.numeric(substr(Sys.Date(), 1, 4))
 
 plot_hitting_past_future_performance <- function(player, past_data, future_data, stat, percent = F)
 {
