@@ -5,9 +5,9 @@ account: rdavtian
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 6619777
-bundleId: 6105935
+bundleId: 6314475
 url: https://rdavtian.shinyapps.io/mlb_player_projections/
-when: 1658087956.06697
-lastSyncTime: 1658087956.06699
+when: 1663536094.03636
+lastSyncTime: 1663536094.03637
 asMultiple: FALSE
 asStatic: FALSE

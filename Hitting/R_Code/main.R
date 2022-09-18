@@ -17,7 +17,7 @@ library('xml2')
 library('kableExtra')
 source('functions.R')
 options(scipen = 999)
-current_season <- as.numeric(substr(Sys.Date(), 1, 4)) - 1
+current_season <- as.numeric(substr(Sys.Date(), 1, 4))
 teamnames <- baseballr::teams_lu_table %>% 
   filter(sport.name == "Major League Baseball") %>% 
   select(teamName, abbreviation) %>% distinct() %>% 
@@ -262,5 +262,6 @@ future_preds <- future_preds %>%
          ISO_Projected = SLG_Projected - AVG_Projected,
          ISO_Projected_Upper = SLG_Projected_Upper - AVG_Projected_Upper)
 
-setwd("C:/Users/rusla/OneDrive/MLBAnalyticsJobs/MLB Player Projections/Hitting/Data")
-write.csv(future_preds, "hitting_projections_data.csv", row.names = F)
+future_preds <- na.omit(future_preds)
+write.csv(future_preds, "C:\\Users\\rusla\\OneDrive\\MLBAnalyticsJobs\\MLB Player Projections\\Hitting\\Data\\hitting_projections_data.csv", row.names = F)
+write.csv(hitting_clean, "C:\\Users\\rusla\\OneDrive\\MLBAnalyticsJobs\\MLB Player Projections\\R Shiny\\past_hitting_data.csv", row.names = F)
