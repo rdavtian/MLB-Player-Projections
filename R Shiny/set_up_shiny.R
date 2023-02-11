@@ -89,7 +89,7 @@ set_up_shiny <- function(future_preds_hitters, past_hitting_data, future_preds_p
           }
           if ((input$user_player_type_leaderboards == "Batter") & (season != "Choose...") & (quantile != "Choose..."))
           {
-            output$tbl <- renderDT({datatable(print_hitting_projection_leaderboards(season, future_preds_hitters, quantile), rownames= FALSE) %>% DT::formatPercentage(c("LA Sweet Spot%","Barrel%"), digits = 1)})
+            output$tbl <- renderDT({datatable(print_hitting_projection_leaderboards(season, future_preds_hitters, quantile), rownames= FALSE) %>% DT::formatPercentage(c("BB%","K%"), digits = 1)})
           } else if ((input$user_player_type_leaderboards == "Pitcher") & (season != "Choose...") & (quantile != "Choose...")) {
             output$tbl <- renderDT({datatable(print_pitching_projection_leaderboards(season, future_preds_pitchers, quantile), rownames= FALSE) %>% DT::formatPercentage(c("BB%","K%"), digits = 1)})
           }
