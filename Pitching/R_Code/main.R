@@ -17,7 +17,8 @@ library('xml2')
 library('kableExtra')
 source('functions.R')
 options(scipen = 999)
-current_season <- as.numeric(substr(Sys.Date(), 1, 4))
+current_season <- 2022
+#current_season <- as.numeric(substr(Sys.Date(), 1, 4))
 teamnames <- baseballr::teams_lu_table %>% 
   filter(sport.name == "Major League Baseball") %>% 
   select(teamName, abbreviation, league.name) %>% distinct() %>% 
